@@ -72,3 +72,19 @@ resource "hcloud_server" "main" {
 
   firewall_ids = [hcloud_firewall.main.id]
 }
+
+# Сервер 2 (worker node)
+resource "hcloud_server" "node2" {
+  name        = "sre-node-2"
+  image       = "ubuntu-22.04"
+  server_type = "cax11"
+  location    = "fsn1"
+  ssh_keys    = ["hetzner", hcloud_ssh_key.vps.name]
+
+  network {
+    network_id = hcloud_network.main.id
+    ip         = "10.0.1.11"
+  }
+
+  firewall_ids = [hcloud_firewall.main.id]
+}
