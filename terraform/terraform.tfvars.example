@@ -1,0 +1,4 @@
+# Скопируйте этот файл в terraform.tfvars и заполните своими значениями
+# cp terraform.tfvars.example terraform.tfvars
+
+hcloud_token = "ВАШ_HETZNER_API_TOKEN"
