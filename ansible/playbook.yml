@@ -4,7 +4,6 @@
   vars_files:
     - vault.yml
   become: true
-
   tasks:
     - name: Update apt cache
       apt:
@@ -21,7 +20,20 @@
           - ufw
           - fail2ban
           - net-tools
+          - expect
         state: present
+
+    - name: Pre-answer iptables-persistent debconf
+      shell: |
+        echo "iptables-persistent iptables-persistent/autosave_v4 boolean true" | debconf-set-selections
+        echo "iptables-persistent iptables-persistent/autosave_v6 boolean true" | debconf-set-selections
+
+    - name: Install iptables-persistent
+      apt:
+        name: iptables-persistent
+        state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
 
     - name: Install Docker
       shell: curl -fsSL https://get.docker.com | sh
@@ -63,24 +75,21 @@
         enabled: yes
         state: started
 
-    - name: Install expect
-      apt:
-        name: expect
-        state: present
-
     - name: Download fail2ban-telegram script
       get_url:
         url: https://raw.githubusercontent.com/Oni-Wan-Shinobi/fail2ban-telegram/main/fail2ban-telegram.sh
         dest: /tmp/fail2ban-telegram.sh
         mode: '0755'
+        force: yes
 
     - name: Run fail2ban-telegram setup
       shell: |
         expect -c '
+        set timeout 60
         spawn bash /tmp/fail2ban-telegram.sh
         expect "Select language"
         send "1\r"
-        expect "token"
+        expect "bot token"
         send "{{ telegram_token }}\r"
         expect "Chat ID"
         send "{{ telegram_chat_id }}\r"
@@ -106,14 +115,16 @@
         url: https://raw.githubusercontent.com/Oni-Wan-Shinobi/server-activity-telegram.sh/main/server-activity-telegram.sh
         dest: /tmp/server-activity.sh
         mode: '0755'
+        force: yes
 
     - name: Run server-activity setup
       shell: |
         expect -c '
+        set timeout 60
         spawn bash /tmp/server-activity.sh
         expect "Select language"
         send "1\r"
-        expect "token"
+        expect "bot token"
         send "{{ telegram_token_activity }}\r"
         expect "Chat ID"
         send "{{ telegram_chat_id }}\r"
