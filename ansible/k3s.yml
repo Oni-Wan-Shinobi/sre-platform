@@ -1,0 +1,50 @@
+---
+- name: Install k3s master
+  hosts: k3s_master
+  become: true
+  tasks:
+    - name: Open k3s API port in UFW
+      ufw:
+        rule: allow
+        port: "6443"
+        proto: tcp
+
+    - name: Install k3s master
+      shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Wait for k3s to be ready
+      shell: k3s kubectl get nodes
+      register: k3s_ready
+      until: k3s_ready.rc == 0
+      retries: 10
+      delay: 10
+
+    - name: Get k3s token
+      shell: cat /var/lib/rancher/k3s/server/node-token
+      register: k3s_token
+
+    - name: Save token as fact
+      set_fact:
+        k3s_node_token: "{{ k3s_token.stdout }}"
+      delegate_facts: true
+      delegate_to: "{{ item }}"
+      loop: "{{ groups['k3s_worker'] }}"
+
+- name: Install k3s worker
+  hosts: k3s_worker
+  become: true
+  tasks:
+    - name: Install k3s worker
+      shell: |
+        curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars['sre-node-1']['ansible_host'] }}:6443 \
+        K3S_TOKEN={{ k3s_node_token }} sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Enable and start k3s-agent
+      systemd:
+        name: k3s-agent
+        enabled: yes
+        state: started
