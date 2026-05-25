@@ -1,0 +1,12 @@
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+terraform/*.tar.gz
+terraform/docs/
+terraform/LICENSE
+terraform/README.md
+
+# Secrets
+*.tfvars
