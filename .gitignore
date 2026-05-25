@@ -10,3 +10,4 @@ terraform/README.md
 
 # Secrets
 *.tfvars
+ansible/vault.yml

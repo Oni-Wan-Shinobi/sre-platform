@@ -1,0 +1,125 @@
+---
+- name: Bootstrap sre-node-1
+  hosts: sre_nodes
+  vars_files:
+    - vault.yml
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - htop
+          - ufw
+          - fail2ban
+          - net-tools
+        state: present
+
+    - name: Install Docker
+      shell: curl -fsSL https://get.docker.com | sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Configure UFW - allow SSH
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Configure UFW - allow HTTP
+      ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: Configure UFW - allow HTTPS
+      ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        policy: deny
+
+    - name: Enable and start fail2ban
+      systemd:
+        name: fail2ban
+        enabled: yes
+        state: started
+
+    - name: Install expect
+      apt:
+        name: expect
+        state: present
+
+    - name: Download fail2ban-telegram script
+      get_url:
+        url: https://raw.githubusercontent.com/Oni-Wan-Shinobi/fail2ban-telegram/main/fail2ban-telegram.sh
+        dest: /tmp/fail2ban-telegram.sh
+        mode: '0755'
+
+    - name: Run fail2ban-telegram setup
+      shell: |
+        expect -c '
+        spawn bash /tmp/fail2ban-telegram.sh
+        expect "Select language"
+        send "1\r"
+        expect "token"
+        send "{{ telegram_token }}\r"
+        expect "Chat ID"
+        send "{{ telegram_chat_id }}\r"
+        expect "whitelisted IP"
+        send "{{ whitelist_ip }}\r"
+        expect "additional"
+        send "{{ whitelist_ip_extra }}\r"
+        expect "attempts"
+        send "\r"
+        expect "password"
+        send "\r"
+        expect "root"
+        send "\r"
+        expect "port"
+        send "\r"
+        expect eof
+        '
+      args:
+        executable: /bin/bash
+
+    - name: Download server-activity script
+      get_url:
+        url: https://raw.githubusercontent.com/Oni-Wan-Shinobi/server-activity-telegram.sh/main/server-activity-telegram.sh
+        dest: /tmp/server-activity.sh
+        mode: '0755'
+
+    - name: Run server-activity setup
+      shell: |
+        expect -c '
+        spawn bash /tmp/server-activity.sh
+        expect "Select language"
+        send "1\r"
+        expect "token"
+        send "{{ telegram_token_activity }}\r"
+        expect "Chat ID"
+        send "{{ telegram_chat_id }}\r"
+        expect "interval"
+        send "\r"
+        expect eof
+        '
+      args:
+        executable: /bin/bash
