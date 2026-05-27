@@ -15,3 +15,4 @@ helm/*/values-prod.yaml
 terraform/backend.tfvars
 helm/pgadmin/values.yaml
 ansible/inventory.ini
+helm/postgres/values.yaml
