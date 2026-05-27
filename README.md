@@ -28,7 +28,7 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 - **TLS**: cert-manager + Let's Encrypt
 - **Security**: UFW, fail2ban + Telegram alerts, iptables-persistent
 - **Monitoring**: Telegram bots for SSH brute-force alerts and server activity
-- **Applications**: n8n (workflow automation), pgAdmin (PostgreSQL management)
+- **Applications**: n8n (workflow automation), pgAdmin (PostgreSQL management), PostgreSQL (database)
 
 ## Infrastructure
 
@@ -59,42 +59,48 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 
 ## Repository Structure
 
-```
-sre-platform/
-├── terraform/                    # Cloud infrastructure (IaC)
-│   ├── main.tf                   # Network, firewall, servers
-│   ├── variables.tf              # Input variables
-│   ├── backend.tfvars.example    # S3 backend config template
-│   └── terraform.tfvars.example  # Hetzner token template
-├── ansible/                      # Server configuration
-│   ├── inventory.ini.example     # Server inventory template
-│   ├── playbook.yml              # Bootstrap: Docker, UFW, fail2ban, Telegram bots
-│   ├── k3s.yml                   # k3s master + worker setup
-│   ├── helm.yml                  # Helm + kubectl install, kubeconfig fetch
-│   ├── cert-manager.yml          # cert-manager + Let's Encrypt ClusterIssuer
-│   ├── deploy-apps.yml           # Deploy applications via Helm
-│   └── vault.yml.example         # Secrets template
-└── helm/
-    ├── n8n/                      # Custom Helm chart for n8n
-    │   ├── Chart.yaml
-    │   ├── values.yaml           # Default values
-    │   ├── values-prod.yaml.example
-    │   └── templates/
-    │       ├── deployment.yaml
-    │       ├── service.yaml
-    │       ├── ingress.yaml
-    │       ├── pvc.yaml
-    │       ├── hpa.yaml
-    │       └── _helpers.tpl
-    └── pgadmin/                  # Custom Helm chart for pgAdmin
-        ├── Chart.yaml
-        ├── values-prod.yaml.example
-        └── templates/
-            ├── deployment.yaml
-            ├── service.yaml
-            ├── ingress.yaml
-            └── pvc.yaml
-```
+    sre-platform/
+    ├── terraform/
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   ├── backend.tfvars.example
+    │   └── terraform.tfvars.example
+    ├── ansible/
+    │   ├── inventory.ini.example
+    │   ├── playbook.yml
+    │   ├── k3s.yml
+    │   ├── helm.yml
+    │   ├── cert-manager.yml
+    │   ├── deploy-apps.yml
+    │   └── vault.yml.example
+    └── helm/
+        ├── n8n/
+        │   ├── Chart.yaml
+        │   ├── values.yaml
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       ├── deployment.yaml
+        │       ├── service.yaml
+        │       ├── ingress.yaml
+        │       ├── pvc.yaml
+        │       ├── hpa.yaml
+        │       └── _helpers.tpl
+        ├── pgadmin/
+        │   ├── Chart.yaml
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       ├── deployment.yaml
+        │       ├── service.yaml
+        │       ├── ingress.yaml
+        │       └── pvc.yaml
+        └── postgres/
+            ├── Chart.yaml
+            ├── values-prod.yaml.example
+            └── templates/
+                ├── statefulset.yaml
+                ├── service.yaml
+                ├── secret.yaml
+                └── pvc.yaml
 
 ## Secrets
 
@@ -102,68 +108,58 @@ Never commit to git:
 
 | File | Contains |
 |------|----------|
-| ```ansible/vault.yml``` | Telegram tokens, whitelisted IPs |
-| ```ansible/inventory.ini``` | Real server IP addresses |
-| ```terraform/terraform.tfvars``` | Hetzner Cloud API token |
-| ```terraform/backend.tfvars``` | S3 access key and secret key |
-| ```helm/n8n/values-prod.yaml``` | Domain, production configuration |
-| ```helm/pgadmin/values.yaml``` | Domain, pgAdmin credentials |
+| ansible/vault.yml | Telegram tokens, whitelisted IPs |
+| ansible/inventory.ini | Real server IP addresses |
+| terraform/terraform.tfvars | Hetzner Cloud API token |
+| terraform/backend.tfvars | S3 access key and secret key |
+| helm/n8n/values-prod.yaml | Domain, production configuration |
+| helm/pgadmin/values.yaml | Domain, pgAdmin credentials |
+| helm/postgres/values.yaml | Database name, username, password |
 
-Use ```.example``` files as templates.
+Use .example files as templates.
 
 ## Prerequisites
 
 ### 0. Management node (sre-main)
 
-The management node is the machine from which you run Terraform, Ansible, Helm and kubectl. It must have the following installed:
-
 **Terraform:**
-```bash
-wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt update && sudo apt install -y terraform
-```
+
+    wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    sudo apt update && sudo apt install -y terraform
 
 **Ansible:**
-```bash
-sudo apt update && sudo apt install -y ansible
-```
 
-**SSH key** (used by Ansible to connect to all nodes):
-```bash
-ssh-keygen -t ed25519 -C "sre-vps" -f ~/.ssh/id_ed25519
-cat ~/.ssh/id_ed25519.pub
-# Add this public key to Hetzner Console → Security → SSH Keys
-# Also update terraform/main.tf → hcloud_ssh_key with this public key
-```
+    sudo apt update && sudo apt install -y ansible
+
+**SSH key:**
+
+    ssh-keygen -t ed25519 -C "sre-vps" -f ~/.ssh/id_ed25519
+    cat ~/.ssh/id_ed25519.pub
 
 **Clone the repository:**
-```bash
-git clone https://github.com/Oni-Wan-Shinobi/sre-platform.git
-cd sre-platform
-```
+
+    git clone https://github.com/Oni-Wan-Shinobi/sre-platform.git
+    cd sre-platform
 
 ### 1. Hetzner Object Storage bucket (manual step)
 
-Hetzner does not support creating Object Storage buckets via Terraform or CLI.
-Create the bucket manually in the Hetzner Console:
-
-1. Go to ```console.hetzner.cloud``` → your project → **Object Storage**
-2. Click **Create Bucket**
-3. Name: ```sre-terraform-state```, Location: ```Falkenstein (fsn1)```, Visibility: **Private**
-4. Go to **S3 Credentials** → **Generate Credentials**
-5. Save the Access Key and Secret Key — fill them into ```terraform/backend.tfvars```
+1. Go to console.hetzner.cloud → your project → Object Storage
+2. Click Create Bucket
+3. Name: sre-terraform-state, Location: Falkenstein (fsn1), Visibility: Private
+4. Go to S3 Credentials → Generate Credentials
+5. Save the Access Key and Secret Key — fill them into terraform/backend.tfvars
 
 ### 2. Telegram bots
 
 Create two bots via @BotFather in Telegram:
-- **Bot 1**: for fail2ban SSH brute-force alerts
-- **Bot 2**: for server activity monitoring
+- Bot 1: for fail2ban SSH brute-force alerts
+- Bot 2: for server activity monitoring
 
 Get your Chat ID by sending a message to the bot and opening:
-```https://api.telegram.org/botYOUR_TOKEN/getUpdates```
+https://api.telegram.org/botYOUR_TOKEN/getUpdates
 
-Look for ```"chat":{"id":XXXXXXX}``` in the response.
+Look for "chat":{"id":XXXXXXX} in the response.
 
 ### 3. Domain
 
@@ -171,72 +167,56 @@ Add an A record pointing to the public IP of sre-node-1.
 
 ## Deployment
 
-### Step 1 — Terraform (provision infrastructure)
+### Step 1 — Terraform
 
-```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
-cp backend.tfvars.example backend.tfvars
-# Fill in terraform.tfvars with your Hetzner API token
-# Fill in backend.tfvars with your S3 credentials
-terraform init -backend-config=backend.tfvars
-terraform apply
-```
+    cd terraform
+    cp terraform.tfvars.example terraform.tfvars
+    cp backend.tfvars.example backend.tfvars
+    terraform init -backend-config=backend.tfvars
+    terraform apply
 
-### Step 2 — Ansible bootstrap (all nodes)
+### Step 2 — Ansible bootstrap
 
-```bash
-cd ansible
-cp vault.yml.example vault.yml
-cp inventory.ini.example inventory.ini
-# Fill in vault.yml with Telegram tokens and whitelisted IPs
-# Fill in inventory.ini with your actual server IPs
-ansible-playbook -i inventory.ini playbook.yml
-```
+    cd ansible
+    cp vault.yml.example vault.yml
+    cp inventory.ini.example inventory.ini
+    ansible-playbook -i inventory.ini playbook.yml
 
-This installs on all nodes: Docker, UFW, fail2ban, iptables-persistent, fail2ban-telegram bot, server-activity-telegram bot.
+Installs on all nodes: Docker, UFW, fail2ban, iptables-persistent, fail2ban-telegram bot, server-activity-telegram bot.
 
 ### Step 3 — k3s cluster
 
-```bash
-ansible-playbook -i inventory.ini k3s.yml
-```
+    ansible-playbook -i inventory.ini k3s.yml
 
 Installs k3s master on sre-node-1, joins sre-node-2 as worker.
 
 ### Step 4 — Helm + kubectl
 
-```bash
-ansible-playbook -i inventory.ini helm.yml
-```
+    ansible-playbook -i inventory.ini helm.yml
 
 Installs Helm and kubectl on sre-main, fetches kubeconfig from master.
 
 ### Step 5 — cert-manager + TLS
 
-```bash
-ansible-playbook -i inventory.ini cert-manager.yml
-```
+    ansible-playbook -i inventory.ini cert-manager.yml
 
 Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
 
 ### Step 6 — Deploy applications
 
-```bash
-cd helm/n8n
-cp values-prod.yaml.example values-prod.yaml
-# Fill in values-prod.yaml with your domain
-cd ../pgadmin
-cp values-prod.yaml.example values.yaml
-# Fill in values.yaml with your domain and credentials
-cd ../../ansible
-ansible-playbook -i inventory.ini deploy-apps.yml
-```
+    cd helm/n8n
+    cp values-prod.yaml.example values-prod.yaml
+    cd ../pgadmin
+    cp values-prod.yaml.example values.yaml
+    cd ../postgres
+    cp values-prod.yaml.example values.yaml
+    cd ../../ansible
+    ansible-playbook -i inventory.ini deploy-apps.yml
 
-For pgAdmin (manual Helm deploy):
-```bash
-helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
-```
+Manual Helm deploys:
+
+    helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
+    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default
 
 ## Security
 
@@ -271,7 +251,7 @@ Production-grade self-hosted платформа, построенная с ис�
 - **TLS**: cert-manager + Let's Encrypt
 - **Безопасность**: UFW, fail2ban + Telegram-уведомления, iptables-persistent
 - **Мониторинг**: Telegram-боты для алертов о брутфорсе SSH и активности сервера
-- **Приложения**: n8n (автоматизация рабочих процессов), pgAdmin (управление PostgreSQL)
+- **Приложения**: n8n (автоматизация рабочих процессов), pgAdmin (управление PostgreSQL), PostgreSQL (база данных)
 
 ## Инфраструктура
 
@@ -302,42 +282,48 @@ Production-grade self-hosted платформа, построенная с ис�
 
 ## Структура репозитория
 
-```
-sre-platform/
-├── terraform/                    # Облачная инфраструктура (IaC)
-│   ├── main.tf                   # Сеть, файрвол, серверы
-│   ├── variables.tf              # Входные переменные
-│   ├── backend.tfvars.example    # Шаблон конфига S3 бэкенда
-│   └── terraform.tfvars.example  # Шаблон токена Hetzner
-├── ansible/                      # Конфигурация серверов
-│   ├── inventory.ini.example     # Шаблон инвентаря серверов
-│   ├── playbook.yml              # Bootstrap: Docker, UFW, fail2ban, Telegram боты
-│   ├── k3s.yml                   # Установка k3s master + worker
-│   ├── helm.yml                  # Установка Helm + kubectl, получение kubeconfig
-│   ├── cert-manager.yml          # cert-manager + Let's Encrypt ClusterIssuer
-│   ├── deploy-apps.yml           # Деплой приложений через Helm
-│   └── vault.yml.example         # Шаблон секретов
-└── helm/
-    ├── n8n/                      # Кастомный Helm чарт для n8n
-    │   ├── Chart.yaml
-    │   ├── values.yaml           # Значения по умолчанию
-    │   ├── values-prod.yaml.example
-    │   └── templates/
-    │       ├── deployment.yaml
-    │       ├── service.yaml
-    │       ├── ingress.yaml
-    │       ├── pvc.yaml
-    │       ├── hpa.yaml
-    │       └── _helpers.tpl
-    └── pgadmin/                  # Кастомный Helm чарт для pgAdmin
-        ├── Chart.yaml
-        ├── values-prod.yaml.example
-        └── templates/
-            ├── deployment.yaml
-            ├── service.yaml
-            ├── ingress.yaml
-            └── pvc.yaml
-```
+    sre-platform/
+    ├── terraform/
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   ├── backend.tfvars.example
+    │   └── terraform.tfvars.example
+    ├── ansible/
+    │   ├── inventory.ini.example
+    │   ├── playbook.yml
+    │   ├── k3s.yml
+    │   ├── helm.yml
+    │   ├── cert-manager.yml
+    │   ├── deploy-apps.yml
+    │   └── vault.yml.example
+    └── helm/
+        ├── n8n/
+        │   ├── Chart.yaml
+        │   ├── values.yaml
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       ├── deployment.yaml
+        │       ├── service.yaml
+        │       ├── ingress.yaml
+        │       ├── pvc.yaml
+        │       ├── hpa.yaml
+        │       └── _helpers.tpl
+        ├── pgadmin/
+        │   ├── Chart.yaml
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       ├── deployment.yaml
+        │       ├── service.yaml
+        │       ├── ingress.yaml
+        │       └── pvc.yaml
+        └── postgres/
+            ├── Chart.yaml
+            ├── values-prod.yaml.example
+            └── templates/
+                ├── statefulset.yaml
+                ├── service.yaml
+                ├── secret.yaml
+                └── pvc.yaml
 
 ## Секреты
 
@@ -345,68 +331,58 @@ sre-platform/
 
 | Файл | Содержимое |
 |------|------------|
-| ```ansible/vault.yml``` | Telegram токены, разрешённые IP-адреса |
-| ```ansible/inventory.ini``` | Реальные IP-адреса серверов |
-| ```terraform/terraform.tfvars``` | API токен Hetzner Cloud |
-| ```terraform/backend.tfvars``` | Access key и Secret key для S3 |
-| ```helm/n8n/values-prod.yaml``` | Домен, продовая конфигурация |
-| ```helm/pgadmin/values.yaml``` | Домен, учётные данные pgAdmin |
+| ansible/vault.yml | Telegram токены, разрешённые IP-адреса |
+| ansible/inventory.ini | Реальные IP-адреса серверов |
+| terraform/terraform.tfvars | API токен Hetzner Cloud |
+| terraform/backend.tfvars | Access key и Secret key для S3 |
+| helm/n8n/values-prod.yaml | Домен, продовая конфигурация |
+| helm/pgadmin/values.yaml | Домен, учётные данные pgAdmin |
+| helm/postgres/values.yaml | Имя базы, имя пользователя, пароль |
 
-Используйте ```.example``` файлы как шаблоны.
+Используйте .example файлы как шаблоны.
 
 ## Предварительные требования
 
 ### 0. Управляющая нода (sre-main)
 
-Управляющая нода — это машина, с которой запускаются Terraform, Ansible, Helm и kubectl. На ней должно быть установлено следующее:
-
 **Terraform:**
-```bash
-wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt update && sudo apt install -y terraform
-```
+
+    wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    sudo apt update && sudo apt install -y terraform
 
 **Ansible:**
-```bash
-sudo apt update && sudo apt install -y ansible
-```
 
-**SSH-ключ** (используется Ansible для подключения ко всем нодам):
-```bash
-ssh-keygen -t ed25519 -C "sre-vps" -f ~/.ssh/id_ed25519
-cat ~/.ssh/id_ed25519.pub
-# Добавьте этот публичный ключ в Hetzner Console → Security → SSH Keys
-# Также обновите terraform/main.tf → hcloud_ssh_key с этим публичным ключом
-```
+    sudo apt update && sudo apt install -y ansible
+
+**SSH-ключ:**
+
+    ssh-keygen -t ed25519 -C "sre-vps" -f ~/.ssh/id_ed25519
+    cat ~/.ssh/id_ed25519.pub
 
 **Клонируйте репозиторий:**
-```bash
-git clone https://github.com/Oni-Wan-Shinobi/sre-platform.git
-cd sre-platform
-```
+
+    git clone https://github.com/Oni-Wan-Shinobi/sre-platform.git
+    cd sre-platform
 
 ### 1. Hetzner Object Storage bucket (ручной шаг)
 
-Hetzner не поддерживает создание Object Storage бакетов через Terraform или CLI.
-Создайте бакет вручную в Hetzner Console:
-
-1. Перейдите на ```console.hetzner.cloud``` → ваш проект → **Object Storage**
-2. Нажмите **Create Bucket**
-3. Имя: ```sre-terraform-state```, Локация: ```Falkenstein (fsn1)```, Видимость: **Private**
-4. Перейдите в **S3 Credentials** → **Generate Credentials**
-5. Сохраните Access Key и Secret Key — вставьте их в ```terraform/backend.tfvars```
+1. Перейдите на console.hetzner.cloud → ваш проект → Object Storage
+2. Нажмите Create Bucket
+3. Имя: sre-terraform-state, Локация: Falkenstein (fsn1), Видимость: Private
+4. Перейдите в S3 Credentials → Generate Credentials
+5. Сохраните Access Key и Secret Key — вставьте их в terraform/backend.tfvars
 
 ### 2. Telegram боты
 
 Создайте два бота через @BotFather в Telegram:
-- **Бот 1**: для алертов fail2ban о попытках брутфорса SSH
-- **Бот 2**: для мониторинга активности сервера
+- Бот 1: для алертов fail2ban о попытках брутфорса SSH
+- Бот 2: для мониторинга активности сервера
 
 Узнайте ваш Chat ID — отправьте боту любое сообщение и откройте:
-```https://api.telegram.org/botВАШ_ТОКЕН/getUpdates```
+https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
 
-Найдите ```"chat":{"id":XXXXXXX}``` в ответе.
+Найдите "chat":{"id":XXXXXXX} в ответе.
 
 ### 3. Домен
 
@@ -414,72 +390,56 @@ Hetzner не поддерживает создание Object Storage бакет
 
 ## Деплой
 
-### Шаг 1 — Terraform (развёртывание инфраструктуры)
+### Шаг 1 — Terraform
 
-```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
-cp backend.tfvars.example backend.tfvars
-# Заполните terraform.tfvars вашим токеном Hetzner API
-# Заполните backend.tfvars вашими S3 credentials
-terraform init -backend-config=backend.tfvars
-terraform apply
-```
+    cd terraform
+    cp terraform.tfvars.example terraform.tfvars
+    cp backend.tfvars.example backend.tfvars
+    terraform init -backend-config=backend.tfvars
+    terraform apply
 
-### Шаг 2 — Ansible bootstrap (все ноды)
+### Шаг 2 — Ansible bootstrap
 
-```bash
-cd ansible
-cp vault.yml.example vault.yml
-cp inventory.ini.example inventory.ini
-# Заполните vault.yml токенами Telegram и разрешёнными IP
-# Заполните inventory.ini реальными IP адресами серверов
-ansible-playbook -i inventory.ini playbook.yml
-```
+    cd ansible
+    cp vault.yml.example vault.yml
+    cp inventory.ini.example inventory.ini
+    ansible-playbook -i inventory.ini playbook.yml
 
 Устанавливает на все ноды: Docker, UFW, fail2ban, iptables-persistent, Telegram-бот fail2ban, Telegram-бот мониторинга активности.
 
 ### Шаг 3 — k3s кластер
 
-```bash
-ansible-playbook -i inventory.ini k3s.yml
-```
+    ansible-playbook -i inventory.ini k3s.yml
 
 Устанавливает k3s master на sre-node-1, подключает sre-node-2 как worker.
 
 ### Шаг 4 — Helm + kubectl
 
-```bash
-ansible-playbook -i inventory.ini helm.yml
-```
+    ansible-playbook -i inventory.ini helm.yml
 
 Устанавливает Helm и kubectl на sre-main, получает kubeconfig с master-ноды.
 
 ### Шаг 5 — cert-manager + TLS
 
-```bash
-ansible-playbook -i inventory.ini cert-manager.yml
-```
+    ansible-playbook -i inventory.ini cert-manager.yml
 
 Устанавливает cert-manager и создаёт Let's Encrypt ClusterIssuer.
 
 ### Шаг 6 — Деплой приложений
 
-```bash
-cd helm/n8n
-cp values-prod.yaml.example values-prod.yaml
-# Заполните values-prod.yaml вашим доменом
-cd ../pgadmin
-cp values-prod.yaml.example values.yaml
-# Заполните values.yaml вашим доменом и учётными данными
-cd ../../ansible
-ansible-playbook -i inventory.ini deploy-apps.yml
-```
+    cd helm/n8n
+    cp values-prod.yaml.example values-prod.yaml
+    cd ../pgadmin
+    cp values-prod.yaml.example values.yaml
+    cd ../postgres
+    cp values-prod.yaml.example values.yaml
+    cd ../../ansible
+    ansible-playbook -i inventory.ini deploy-apps.yml
 
-Деплой pgAdmin (вручную через Helm):
-```bash
-helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
-```
+Деплой вручную через Helm:
+
+    helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
+    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default
 
 ## Безопасность
 
