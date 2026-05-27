@@ -4,15 +4,21 @@
 ingress:
   enabled: true
   className: "traefik"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
     - host: n8n.your-domain.com
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+  tls:
+    - secretName: n8n-tls
+      hosts:
+        - n8n.your-domain.com
 
 env:
   N8N_PORT: "5678"
   N8N_PROTOCOL: "https"
   N8N_HOST: "n8n.your-domain.com"
+  N8N_SECURE_COOKIE: "true"
   GENERIC_TIMEZONE: "Europe/Helsinki"
