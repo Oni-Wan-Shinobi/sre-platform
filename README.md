@@ -59,7 +59,7 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 
 ## Repository Structure
 
-```
+\`\`\`
 sre-platform/
 ├── terraform/                    # Cloud infrastructure (IaC)
 │   ├── main.tf                   # Network, firewall, servers
@@ -86,7 +86,7 @@ sre-platform/
             ├── pvc.yaml
             ├── hpa.yaml
             └── _helpers.tpl
-```
+\`\`\`
 
 ## Secrets
 
@@ -94,25 +94,55 @@ Never commit to git:
 
 | File | Contains |
 |------|----------|
-| `ansible/vault.yml` | Telegram tokens, whitelisted IPs |
-| `terraform/terraform.tfvars` | Hetzner Cloud API token |
-| `terraform/backend.tfvars` | S3 access key and secret key |
-| `helm/n8n/values-prod.yaml` | Domain, production configuration |
+| \`ansible/vault.yml\` | Telegram tokens, whitelisted IPs |
+| \`terraform/terraform.tfvars\` | Hetzner Cloud API token |
+| \`terraform/backend.tfvars\` | S3 access key and secret key |
+| \`helm/n8n/values-prod.yaml\` | Domain, production configuration |
 
-Use `.example` files as templates.
+Use \`.example\` files as templates.
 
 ## Prerequisites
+
+### 0. Management node (sre-main)
+
+The management node is the machine from which you run Terraform, Ansible, Helm and kubectl. It must have the following installed:
+
+**Terraform:**
+\`\`\`bash
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com \$(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
+\`\`\`
+
+**Ansible:**
+\`\`\`bash
+sudo apt update && sudo apt install -y ansible
+\`\`\`
+
+**SSH key** (used by Ansible to connect to all nodes):
+\`\`\`bash
+ssh-keygen -t ed25519 -C "sre-vps" -f ~/.ssh/id_ed25519
+cat ~/.ssh/id_ed25519.pub
+# Add this public key to Hetzner Console → Security → SSH Keys
+# Also update terraform/main.tf → hcloud_ssh_key with this public key
+\`\`\`
+
+**Clone the repository:**
+\`\`\`bash
+git clone https://github.com/Oni-Wan-Shinobi/sre-platform.git
+cd sre-platform
+\`\`\`
 
 ### 1. Hetzner Object Storage bucket (manual step)
 
 Hetzner does not support creating Object Storage buckets via Terraform or CLI.
 Create the bucket manually in the Hetzner Console:
 
-1. Go to `console.hetzner.cloud` → your project → **Object Storage**
+1. Go to \`console.hetzner.cloud\` → your project → **Object Storage**
 2. Click **Create Bucket**
-3. Name: `sre-terraform-state`, Location: `Falkenstein (fsn1)`, Visibility: **Private**
+3. Name: \`sre-terraform-state\`, Location: \`Falkenstein (fsn1)\`, Visibility: **Private**
 4. Go to **S3 Credentials** → **Generate Credentials**
-5. Save the Access Key and Secret Key — fill them into `terraform/backend.tfvars`
+5. Save the Access Key and Secret Key — fill them into \`terraform/backend.tfvars\`
 
 ### 2. Telegram bots
 
@@ -121,9 +151,9 @@ Create two bots via @BotFather in Telegram:
 - **Bot 2**: for server activity monitoring
 
 Get your Chat ID by sending a message to the bot and opening:
-`https://api.telegram.org/botYOUR_TOKEN/getUpdates`
+\`https://api.telegram.org/botYOUR_TOKEN/getUpdates\`
 
-Look for `"chat":{"id":XXXXXXX}` in the response.
+Look for \`"chat":{"id":XXXXXXX}\` in the response.
 
 ### 3. Domain
 
@@ -133,7 +163,7 @@ Add an A record pointing to the public IP of sre-node-1.
 
 ### Step 1 — Terraform (provision infrastructure)
 
-```bash
+\`\`\`bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
 cp backend.tfvars.example backend.tfvars
@@ -141,53 +171,53 @@ cp backend.tfvars.example backend.tfvars
 # Fill in backend.tfvars with your S3 credentials
 terraform init -backend-config=backend.tfvars
 terraform apply
-```
+\`\`\`
 
 ### Step 2 — Ansible bootstrap (all nodes)
 
-```bash
+\`\`\`bash
 cd ansible
 cp vault.yml.example vault.yml
 # Fill in vault.yml with Telegram tokens and whitelisted IPs
 # Update inventory.ini with your actual server IPs
 ansible-playbook -i inventory.ini playbook.yml
-```
+\`\`\`
 
 This installs on all nodes: Docker, UFW, fail2ban, iptables-persistent, fail2ban-telegram bot, server-activity-telegram bot.
 
 ### Step 3 — k3s cluster
 
-```bash
+\`\`\`bash
 ansible-playbook -i inventory.ini k3s.yml
-```
+\`\`\`
 
 Installs k3s master on sre-node-1, joins sre-node-2 as worker.
 
 ### Step 4 — Helm + kubectl
 
-```bash
+\`\`\`bash
 ansible-playbook -i inventory.ini helm.yml
-```
+\`\`\`
 
 Installs Helm and kubectl on sre-main, fetches kubeconfig from master.
 
 ### Step 5 — cert-manager + TLS
 
-```bash
+\`\`\`bash
 ansible-playbook -i inventory.ini cert-manager.yml
-```
+\`\`\`
 
 Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
 
 ### Step 6 — Deploy applications
 
-```bash
+\`\`\`bash
 cd helm/n8n
 cp values-prod.yaml.example values-prod.yaml
 # Fill in values-prod.yaml with your domain
 cd ../../ansible
 ansible-playbook -i inventory.ini deploy-apps.yml
-```
+\`\`\`
 
 ## Security
 
@@ -253,7 +283,7 @@ Production-grade self-hosted платформа, построенная с ис�
 
 ## Структура репозитория
 
-```
+\`\`\`
 sre-platform/
 ├── terraform/                    # Облачная инфраструктура (IaC)
 │   ├── main.tf                   # Сеть, файрвол, серверы
@@ -280,7 +310,7 @@ sre-platform/
             ├── pvc.yaml
             ├── hpa.yaml
             └── _helpers.tpl
-```
+\`\`\`
 
 ## Секреты
 
@@ -288,25 +318,55 @@ sre-platform/
 
 | Файл | Содержимое |
 |------|------------|
-| `ansible/vault.yml` | Telegram токены, разрешённые IP-адреса |
-| `terraform/terraform.tfvars` | API токен Hetzner Cloud |
-| `terraform/backend.tfvars` | Access key и Secret key для S3 |
-| `helm/n8n/values-prod.yaml` | Домен, продовая конфигурация |
+| \`ansible/vault.yml\` | Telegram токены, разрешённые IP-адреса |
+| \`terraform/terraform.tfvars\` | API токен Hetzner Cloud |
+| \`terraform/backend.tfvars\` | Access key и Secret key для S3 |
+| \`helm/n8n/values-prod.yaml\` | Домен, продовая конфигурация |
 
-Используйте `.example` файлы как шаблоны.
+Используйте \`.example\` файлы как шаблоны.
 
 ## Предварительные требования
+
+### 0. Управляющая нода (sre-main)
+
+Управляющая нода — это машина, с которой запускаются Terraform, Ansible, Helm и kubectl. На ней должно быть установлено следующее:
+
+**Terraform:**
+\`\`\`bash
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com \$(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
+\`\`\`
+
+**Ansible:**
+\`\`\`bash
+sudo apt update && sudo apt install -y ansible
+\`\`\`
+
+**SSH-ключ** (используется Ansible для подключения ко всем нодам):
+\`\`\`bash
+ssh-keygen -t ed25519 -C "sre-vps" -f ~/.ssh/id_ed25519
+cat ~/.ssh/id_ed25519.pub
+# Добавьте этот публичный ключ в Hetzner Console → Security → SSH Keys
+# Также обновите terraform/main.tf → hcloud_ssh_key с этим публичным ключом
+\`\`\`
+
+**Клонируйте репозиторий:**
+\`\`\`bash
+git clone https://github.com/Oni-Wan-Shinobi/sre-platform.git
+cd sre-platform
+\`\`\`
 
 ### 1. Hetzner Object Storage bucket (ручной шаг)
 
 Hetzner не поддерживает создание Object Storage бакетов через Terraform или CLI.
 Создайте бакет вручную в Hetzner Console:
 
-1. Перейдите на `console.hetzner.cloud` → ваш проект → **Object Storage**
+1. Перейдите на \`console.hetzner.cloud\` → ваш проект → **Object Storage**
 2. Нажмите **Create Bucket**
-3. Имя: `sre-terraform-state`, Локация: `Falkenstein (fsn1)`, Видимость: **Private**
+3. Имя: \`sre-terraform-state\`, Локация: \`Falkenstein (fsn1)\`, Видимость: **Private**
 4. Перейдите в **S3 Credentials** → **Generate Credentials**
-5. Сохраните Access Key и Secret Key — вставьте их в `terraform/backend.tfvars`
+5. Сохраните Access Key и Secret Key — вставьте их в \`terraform/backend.tfvars\`
 
 ### 2. Telegram боты
 
@@ -315,9 +375,9 @@ Hetzner не поддерживает создание Object Storage бакет
 - **Бот 2**: для мониторинга активности сервера
 
 Узнайте ваш Chat ID — отправьте боту любое сообщение и откройте:
-`https://api.telegram.org/botВАШ_ТОКЕН/getUpdates`
+\`https://api.telegram.org/botВАШ_ТОКЕН/getUpdates\`
 
-Найдите `"chat":{"id":XXXXXXX}` в ответе.
+Найдите \`"chat":{"id":XXXXXXX}\` в ответе.
 
 ### 3. Домен
 
@@ -327,7 +387,7 @@ Hetzner не поддерживает создание Object Storage бакет
 
 ### Шаг 1 — Terraform (развёртывание инфраструктуры)
 
-```bash
+\`\`\`bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
 cp backend.tfvars.example backend.tfvars
@@ -335,53 +395,53 @@ cp backend.tfvars.example backend.tfvars
 # Заполните backend.tfvars вашими S3 credentials
 terraform init -backend-config=backend.tfvars
 terraform apply
-```
+\`\`\`
 
 ### Шаг 2 — Ansible bootstrap (все ноды)
 
-```bash
+\`\`\`bash
 cd ansible
 cp vault.yml.example vault.yml
 # Заполните vault.yml токенами Telegram и разрешёнными IP
 # Обновите inventory.ini реальными IP адресами серверов
 ansible-playbook -i inventory.ini playbook.yml
-```
+\`\`\`
 
 Устанавливает на все ноды: Docker, UFW, fail2ban, iptables-persistent, Telegram-бот fail2ban, Telegram-бот мониторинга активности.
 
 ### Шаг 3 — k3s кластер
 
-```bash
+\`\`\`bash
 ansible-playbook -i inventory.ini k3s.yml
-```
+\`\`\`
 
 Устанавливает k3s master на sre-node-1, подключает sre-node-2 как worker.
 
 ### Шаг 4 — Helm + kubectl
 
-```bash
+\`\`\`bash
 ansible-playbook -i inventory.ini helm.yml
-```
+\`\`\`
 
 Устанавливает Helm и kubectl на sre-main, получает kubeconfig с master-ноды.
 
 ### Шаг 5 — cert-manager + TLS
 
-```bash
+\`\`\`bash
 ansible-playbook -i inventory.ini cert-manager.yml
-```
+\`\`\`
 
 Устанавливает cert-manager и создаёт Let's Encrypt ClusterIssuer.
 
 ### Шаг 6 — Деплой приложений
 
-```bash
+\`\`\`bash
 cd helm/n8n
 cp values-prod.yaml.example values-prod.yaml
 # Заполните values-prod.yaml вашим доменом
 cd ../../ansible
 ansible-playbook -i inventory.ini deploy-apps.yml
-```
+\`\`\`
 
 ## Безопасность
 
