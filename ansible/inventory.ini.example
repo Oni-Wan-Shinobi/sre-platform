@@ -1,0 +1,10 @@
+[sre_nodes]
+sre-node-1 ansible_host=YOUR_NODE1_IP ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
+sre-node-2 ansible_host=YOUR_NODE2_IP ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
+sre-main ansible_host=YOUR_MAIN_IP ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[k3s_master]
+sre-node-1 ansible_host=YOUR_NODE1_IP ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[k3s_worker]
+sre-node-2 ansible_host=YOUR_NODE2_IP ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
