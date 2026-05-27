@@ -1,0 +1,6 @@
+# Скопируйте этот файл в backend.tfvars и заполните своими значениями
+# cp backend.tfvars.example backend.tfvars
+# Затем запустите: terraform init -backend-config=backend.tfvars
+
+access_key = "ВАШ_HETZNER_S3_ACCESS_KEY"
+secret_key = "ВАШ_HETZNER_S3_SECRET_KEY"

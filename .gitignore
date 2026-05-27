@@ -12,3 +12,4 @@ terraform/README.md
 *.tfvars
 ansible/vault.yml
 helm/*/values-prod.yaml
+terraform/backend.tfvars
