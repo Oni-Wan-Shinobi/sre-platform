@@ -11,3 +11,4 @@ terraform/README.md
 # Secrets
 *.tfvars
 ansible/vault.yml
+helm/*/values-prod.yaml

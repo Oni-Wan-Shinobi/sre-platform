@@ -1,0 +1,18 @@
+# Скопируйте этот файл в values-prod.yaml и заполните своими значениями
+# cp values-prod.yaml.example values-prod.yaml
+
+ingress:
+  enabled: true
+  className: "traefik"
+  hosts:
+    - host: n8n.your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+env:
+  N8N_PORT: "5678"
+  N8N_PROTOCOL: "https"
+  N8N_HOST: "n8n.your-domain.com"
+  GENERIC_TIMEZONE: "Europe/Helsinki"
