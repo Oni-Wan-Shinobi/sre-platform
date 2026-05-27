@@ -9,6 +9,12 @@
         port: "6443"
         proto: tcp
 
+    - name: Open Flannel VXLAN port in UFW
+      ufw:
+        rule: allow
+        port: "8472"
+        proto: udp
+
     - name: Install k3s master
       shell: curl -sfL https://get.k3s.io | sh -
       args:
@@ -36,6 +42,12 @@
   hosts: k3s_worker
   become: true
   tasks:
+    - name: Open Flannel VXLAN port in UFW
+      ufw:
+        rule: allow
+        port: "8472"
+        proto: udp
+
     - name: Install k3s worker
       shell: |
         curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars['sre-node-1']['ansible_host'] }}:6443 \

@@ -5,9 +5,9 @@
   tasks:
     - name: Deploy n8n
       shell: |
-        helm upgrade --install n8n /root/sre-platform/helm/n8n \
+        helm upgrade --install n8n {{ playbook_dir }}/../helm/n8n \
           --namespace default \
-          --values /root/sre-platform/helm/n8n/values-prod.yaml
+          --values {{ playbook_dir }}/../helm/n8n/values-prod.yaml
       register: helm_output
 
     - name: Print deploy status

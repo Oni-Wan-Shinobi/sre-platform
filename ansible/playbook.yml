@@ -1,5 +1,5 @@
 ---
-- name: Bootstrap sre-node-1
+- name: Bootstrap all sre nodes
   hosts: sre_nodes
   vars_files:
     - vault.yml
