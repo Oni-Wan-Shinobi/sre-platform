@@ -1,0 +1,41 @@
+---
+- name: Install Helm and configure kubeconfig
+  hosts: sre-main
+  become: true
+  tasks:
+    - name: Install Helm
+      shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      args:
+        creates: /usr/local/bin/helm
+
+    - name: Check Helm version
+      shell: helm version
+      register: helm_ver
+
+    - name: Print Helm version
+      debug:
+        msg: "{{ helm_ver.stdout }}"
+
+    - name: Create .kube directory
+      file:
+        path: /root/.kube
+        state: directory
+        mode: '0700'
+
+    - name: Fetch kubeconfig from master
+      shell: ssh -o StrictHostKeyChecking=no root@{{ hostvars['sre-node-1']['ansible_host'] }} "cat /etc/rancher/k3s/k3s.yaml"
+      register: kubeconfig_raw
+
+    - name: Write kubeconfig with correct IP
+      copy:
+        content: "{{ kubeconfig_raw.stdout | replace('127.0.0.1', hostvars['sre-node-1']['ansible_host']) }}"
+        dest: /root/.kube/config
+        mode: '0600'
+
+    - name: Verify cluster access
+      shell: helm list -A
+      register: helm_list
+
+    - name: Print cluster status
+      debug:
+        msg: "{{ helm_list.stdout }}"
