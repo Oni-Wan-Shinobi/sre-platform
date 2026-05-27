@@ -61,6 +61,12 @@ resource "hcloud_firewall" "main" {
     port       = "6443"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
+  rule {
+    direction  = "in"
+    protocol   = "udp"
+    port       = "8472"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
 }
 
 # Сервер (аналог EC2 в AWS)

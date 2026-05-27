@@ -1,0 +1,15 @@
+---
+- name: Deploy applications via Helm
+  hosts: sre-main
+  become: true
+  tasks:
+    - name: Deploy n8n
+      shell: |
+        helm upgrade --install n8n /root/sre-platform/helm/n8n \
+          --namespace default \
+          --values /root/sre-platform/helm/n8n/values-prod.yaml
+      register: helm_output
+
+    - name: Print deploy status
+      debug:
+        msg: "{{ helm_output.stdout }}"

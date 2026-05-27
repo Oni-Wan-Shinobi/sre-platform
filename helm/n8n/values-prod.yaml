@@ -1,0 +1,15 @@
+ingress:
+  enabled: true
+  className: "traefik"
+  hosts:
+    - host: n8n.sre.lollollol.ru
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+env:
+  N8N_PORT: "5678"
+  N8N_PROTOCOL: "http"
+  N8N_HOST: "n8n.sre.lollollol.ru"
+  GENERIC_TIMEZONE: "Europe/Helsinki"
