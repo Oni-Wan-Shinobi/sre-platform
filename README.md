@@ -70,10 +70,6 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
     │   │   └── common/
     │   │       └── tasks/
     │   │           └── main.yml
-    │   ├── roles/
-    │   │   └── common/
-    │   │       └── tasks/
-    │   │           └── main.yml
     │   ├── inventory.ini.example
     │   ├── playbook.yml
     │   ├── k3s.yml
@@ -298,10 +294,6 @@ Production-grade self-hosted платформа, построенная с ис�
     │   ├── backend.tfvars.example
     │   └── terraform.tfvars.example
     ├── ansible/
-    │   ├── roles/
-    │   │   └── common/
-    │   │       └── tasks/
-    │   │           └── main.yml
     │   ├── roles/
     │   │   └── common/
     │   │       └── tasks/
