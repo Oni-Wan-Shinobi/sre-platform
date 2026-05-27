@@ -13,3 +13,4 @@ terraform/README.md
 ansible/vault.yml
 helm/*/values-prod.yaml
 terraform/backend.tfvars
+helm/pgadmin/values.yaml
