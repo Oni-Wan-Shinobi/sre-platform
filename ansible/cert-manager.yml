@@ -1,0 +1,40 @@
+---
+- name: Install cert-manager and configure TLS
+  hosts: sre-main
+  become: true
+  tasks:
+    - name: Add jetstack helm repo
+      shell: helm repo add jetstack https://charts.jetstack.io && helm repo update
+
+    - name: Install cert-manager
+      shell: |
+        helm upgrade --install cert-manager jetstack/cert-manager \
+          --namespace cert-manager \
+          --create-namespace \
+          --set crds.enabled=true
+
+    - name: Wait for cert-manager to be ready
+      shell: |
+        kubectl wait --for=condition=ready pod \
+          -l app.kubernetes.io/instance=cert-manager \
+          -n cert-manager \
+          --timeout=120s
+
+    - name: Create Let's Encrypt ClusterIssuer
+      shell: |
+        kubectl apply -f - <<EOF2
+        apiVersion: cert-manager.io/v1
+        kind: ClusterIssuer
+        metadata:
+          name: letsencrypt-prod
+        spec:
+          acme:
+            server: https://acme-v02.api.letsencrypt.org/directory
+            email: vladimirgriboedov855@gmail.com
+            privateKeySecretRef:
+              name: letsencrypt-prod
+            solvers:
+            - http01:
+                ingress:
+                  class: traefik
+        EOF2
