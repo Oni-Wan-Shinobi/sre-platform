@@ -66,6 +66,14 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
     │   ├── backend.tfvars.example
     │   └── terraform.tfvars.example
     ├── ansible/
+    │   ├── roles/
+    │   │   └── common/
+    │   │       └── tasks/
+    │   │           └── main.yml
+    │   ├── roles/
+    │   │   └── common/
+    │   │       └── tasks/
+    │   │           └── main.yml
     │   ├── inventory.ini.example
     │   ├── playbook.yml
     │   ├── k3s.yml
@@ -225,6 +233,7 @@ Manual Helm deploys:
 - **fail2ban-telegram**: real-time Telegram alerts on every ban event
 - **server-activity-telegram**: periodic server activity reports to Telegram
 - **iptables-persistent**: firewall rules survive reboots
+- **Terraform S3 backend**: state stored remotely in Hetzner Object Storage
 - **Secrets management**: all tokens and keys stored outside git in vault.yml / tfvars files
 
 <div align="right"><a href="#english">👆 English</a> · <a href="#russian">👇 Русский</a></div>
@@ -289,6 +298,14 @@ Production-grade self-hosted платформа, построенная с ис�
     │   ├── backend.tfvars.example
     │   └── terraform.tfvars.example
     ├── ansible/
+    │   ├── roles/
+    │   │   └── common/
+    │   │       └── tasks/
+    │   │           └── main.yml
+    │   ├── roles/
+    │   │   └── common/
+    │   │       └── tasks/
+    │   │           └── main.yml
     │   ├── inventory.ini.example
     │   ├── playbook.yml
     │   ├── k3s.yml
@@ -448,6 +465,7 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
 - **fail2ban-telegram**: мгновенные Telegram-уведомления при каждом бане
 - **server-activity-telegram**: периодические отчёты об активности сервера в Telegram
 - **iptables-persistent**: правила файрвола сохраняются после перезагрузки
+- **Terraform S3 backend**: state хранится удалённо в Hetzner Object Storage
 - **Управление секретами**: все токены и ключи хранятся вне git в vault.yml / tfvars файлах
 
 <div align="right"><a href="#russian">👆 Наверх</a> · <a href="#english">👆 English</a></div>
