@@ -28,7 +28,7 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 - **TLS**: cert-manager + Let's Encrypt
 - **Security**: UFW, fail2ban + Telegram alerts, iptables-persistent
 - **Monitoring**: Telegram bots for SSH brute-force alerts and server activity
-- **Applications**: n8n (workflow automation)
+- **Applications**: n8n (workflow automation), pgAdmin (PostgreSQL management)
 
 ## Infrastructure
 
@@ -67,7 +67,7 @@ sre-platform/
 │   ├── backend.tfvars.example    # S3 backend config template
 │   └── terraform.tfvars.example  # Hetzner token template
 ├── ansible/                      # Server configuration
-│   ├── inventory.ini             # Server inventory (all nodes)
+│   ├── inventory.ini.example     # Server inventory template
 │   ├── playbook.yml              # Bootstrap: Docker, UFW, fail2ban, Telegram bots
 │   ├── k3s.yml                   # k3s master + worker setup
 │   ├── helm.yml                  # Helm + kubectl install, kubeconfig fetch
@@ -75,17 +75,25 @@ sre-platform/
 │   ├── deploy-apps.yml           # Deploy applications via Helm
 │   └── vault.yml.example         # Secrets template
 └── helm/
-    └── n8n/                      # Custom Helm chart for n8n
+    ├── n8n/                      # Custom Helm chart for n8n
+    │   ├── Chart.yaml
+    │   ├── values.yaml           # Default values
+    │   ├── values-prod.yaml.example
+    │   └── templates/
+    │       ├── deployment.yaml
+    │       ├── service.yaml
+    │       ├── ingress.yaml
+    │       ├── pvc.yaml
+    │       ├── hpa.yaml
+    │       └── _helpers.tpl
+    └── pgadmin/                  # Custom Helm chart for pgAdmin
         ├── Chart.yaml
-        ├── values.yaml           # Default values
         ├── values-prod.yaml.example
         └── templates/
             ├── deployment.yaml
             ├── service.yaml
             ├── ingress.yaml
-            ├── pvc.yaml
-            ├── hpa.yaml
-            └── _helpers.tpl
+            └── pvc.yaml
 ```
 
 ## Secrets
@@ -95,9 +103,11 @@ Never commit to git:
 | File | Contains |
 |------|----------|
 | ```ansible/vault.yml``` | Telegram tokens, whitelisted IPs |
+| ```ansible/inventory.ini``` | Real server IP addresses |
 | ```terraform/terraform.tfvars``` | Hetzner Cloud API token |
 | ```terraform/backend.tfvars``` | S3 access key and secret key |
 | ```helm/n8n/values-prod.yaml``` | Domain, production configuration |
+| ```helm/pgadmin/values.yaml``` | Domain, pgAdmin credentials |
 
 Use ```.example``` files as templates.
 
@@ -178,8 +188,9 @@ terraform apply
 ```bash
 cd ansible
 cp vault.yml.example vault.yml
+cp inventory.ini.example inventory.ini
 # Fill in vault.yml with Telegram tokens and whitelisted IPs
-# Update inventory.ini with your actual server IPs
+# Fill in inventory.ini with your actual server IPs
 ansible-playbook -i inventory.ini playbook.yml
 ```
 
@@ -215,8 +226,16 @@ Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
 cd helm/n8n
 cp values-prod.yaml.example values-prod.yaml
 # Fill in values-prod.yaml with your domain
+cd ../pgadmin
+cp values-prod.yaml.example values.yaml
+# Fill in values.yaml with your domain and credentials
 cd ../../ansible
 ansible-playbook -i inventory.ini deploy-apps.yml
+```
+
+For pgAdmin (manual Helm deploy):
+```bash
+helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
 ```
 
 ## Security
@@ -252,7 +271,7 @@ Production-grade self-hosted платформа, построенная с ис�
 - **TLS**: cert-manager + Let's Encrypt
 - **Безопасность**: UFW, fail2ban + Telegram-уведомления, iptables-persistent
 - **Мониторинг**: Telegram-боты для алертов о брутфорсе SSH и активности сервера
-- **Приложения**: n8n (автоматизация рабочих процессов)
+- **Приложения**: n8n (автоматизация рабочих процессов), pgAdmin (управление PostgreSQL)
 
 ## Инфраструктура
 
@@ -291,7 +310,7 @@ sre-platform/
 │   ├── backend.tfvars.example    # Шаблон конфига S3 бэкенда
 │   └── terraform.tfvars.example  # Шаблон токена Hetzner
 ├── ansible/                      # Конфигурация серверов
-│   ├── inventory.ini             # Инвентарь серверов (все ноды)
+│   ├── inventory.ini.example     # Шаблон инвентаря серверов
 │   ├── playbook.yml              # Bootstrap: Docker, UFW, fail2ban, Telegram боты
 │   ├── k3s.yml                   # Установка k3s master + worker
 │   ├── helm.yml                  # Установка Helm + kubectl, получение kubeconfig
@@ -299,17 +318,25 @@ sre-platform/
 │   ├── deploy-apps.yml           # Деплой приложений через Helm
 │   └── vault.yml.example         # Шаблон секретов
 └── helm/
-    └── n8n/                      # Кастомный Helm чарт для n8n
+    ├── n8n/                      # Кастомный Helm чарт для n8n
+    │   ├── Chart.yaml
+    │   ├── values.yaml           # Значения по умолчанию
+    │   ├── values-prod.yaml.example
+    │   └── templates/
+    │       ├── deployment.yaml
+    │       ├── service.yaml
+    │       ├── ingress.yaml
+    │       ├── pvc.yaml
+    │       ├── hpa.yaml
+    │       └── _helpers.tpl
+    └── pgadmin/                  # Кастомный Helm чарт для pgAdmin
         ├── Chart.yaml
-        ├── values.yaml           # Значения по умолчанию
         ├── values-prod.yaml.example
         └── templates/
             ├── deployment.yaml
             ├── service.yaml
             ├── ingress.yaml
-            ├── pvc.yaml
-            ├── hpa.yaml
-            └── _helpers.tpl
+            └── pvc.yaml
 ```
 
 ## Секреты
@@ -319,9 +346,11 @@ sre-platform/
 | Файл | Содержимое |
 |------|------------|
 | ```ansible/vault.yml``` | Telegram токены, разрешённые IP-адреса |
+| ```ansible/inventory.ini``` | Реальные IP-адреса серверов |
 | ```terraform/terraform.tfvars``` | API токен Hetzner Cloud |
 | ```terraform/backend.tfvars``` | Access key и Secret key для S3 |
 | ```helm/n8n/values-prod.yaml``` | Домен, продовая конфигурация |
+| ```helm/pgadmin/values.yaml``` | Домен, учётные данные pgAdmin |
 
 Используйте ```.example``` файлы как шаблоны.
 
@@ -402,8 +431,9 @@ terraform apply
 ```bash
 cd ansible
 cp vault.yml.example vault.yml
+cp inventory.ini.example inventory.ini
 # Заполните vault.yml токенами Telegram и разрешёнными IP
-# Обновите inventory.ini реальными IP адресами серверов
+# Заполните inventory.ini реальными IP адресами серверов
 ansible-playbook -i inventory.ini playbook.yml
 ```
 
@@ -439,8 +469,16 @@ ansible-playbook -i inventory.ini cert-manager.yml
 cd helm/n8n
 cp values-prod.yaml.example values-prod.yaml
 # Заполните values-prod.yaml вашим доменом
+cd ../pgadmin
+cp values-prod.yaml.example values.yaml
+# Заполните values.yaml вашим доменом и учётными данными
 cd ../../ansible
 ansible-playbook -i inventory.ini deploy-apps.yml
+```
+
+Деплой pgAdmin (вручную через Helm):
+```bash
+helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
 ```
 
 ## Безопасность
