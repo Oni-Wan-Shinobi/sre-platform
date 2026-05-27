@@ -1,0 +1,6 @@
+n8n has been deployed successfully!
+
+Access n8n at: http://{{ (index .Values.ingress.hosts 0).host }}
+
+To check the status:
+  kubectl get pods -l app.kubernetes.io/name=n8n
