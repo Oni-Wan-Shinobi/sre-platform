@@ -1,0 +1,40 @@
+name: Deploy to k3s
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Helm lint
+        run: |
+          helm lint helm/n8n
+          helm lint helm/monitoring
+          helm lint helm/pgadmin
+          helm lint helm/postgres
+
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply SLO rules
+        run: kubectl apply -f helm/monitoring/templates/slo-rules.yaml
+      - name: Deploy n8n
+        run: helm upgrade --install n8n helm/n8n --namespace default --values helm/n8n/values.yaml --values helm/n8n/values-prod.yaml --wait --timeout 120s
+      - name: Deploy pgadmin
+        run: helm upgrade --install pgadmin helm/pgadmin --namespace default --values helm/pgadmin/values.yaml --wait --timeout 120s
+      - name: Deploy postgres
+        run: helm upgrade --install postgres helm/postgres --namespace default --values helm/postgres/values.yaml --wait --timeout 120s
+      - name: Verify
+        run: |
+          kubectl rollout status deployment/n8n -n default --timeout=60s
+          kubectl rollout status deployment/pgadmin -n default --timeout=60s
+          kubectl rollout status statefulset/postgres -n default --timeout=60s
