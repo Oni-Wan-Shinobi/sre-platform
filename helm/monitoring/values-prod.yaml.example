@@ -1,0 +1,21 @@
+# Скопируйте этот файл в values-prod.yaml и заполните своими значениями
+# cp values-prod.yaml.example values-prod.yaml
+
+grafana:
+  adminPassword: "ВАШ_ПАРОЛЬ_GRAFANA"
+  ingress:
+    hosts:
+      - grafana.ВАШ_ДОМЕН
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.ВАШ_ДОМЕН
+
+alertmanager:
+  config:
+    receivers:
+      - name: telegram
+        telegram_configs:
+          - bot_token: "ВАШ_TELEGRAM_BOT_TOKEN"
+            chat_id: ВАШ_CHAT_ID
+            message: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
