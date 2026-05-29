@@ -89,6 +89,12 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
     │   ├── cert-manager.yml
     │   ├── deploy-apps.yml
     │   └── vault.yml.example
+    ├── exporter/
+    │   ├── Dockerfile
+    │   ├── exporter.py
+    │   ├── test_exporter.py
+    │   ├── requirements.txt
+    │   └── .flake8
     └── helm/
         ├── n8n/
         │   ├── Chart.yaml
@@ -119,6 +125,15 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
         │       ├── service.yaml
         │       ├── secret.yaml
         │       └── pvc.yaml
+        ├── n8n-exporter/
+        │   ├── Chart.yaml
+        │   ├── values.yaml
+        │   └── templates/
+        │       ├── deployment.yaml
+        │       ├── service.yaml
+        │       ├── servicemonitor.yaml
+        │       ├── secret.yaml
+        │       └── _helpers.tpl
         ├── monitoring/
         │   ├── values.yaml
         │   ├── values-prod.yaml.example
@@ -319,8 +334,30 @@ Add the following GitHub Secrets in repository Settings → Secrets and variable
 | N8N_VALUES_PROD | Contents of helm/n8n/values-prod.yaml |
 | PGADMIN_VALUES_PROD | Contents of helm/pgadmin/values-prod.yaml |
 | POSTGRES_VALUES_PROD | Contents of helm/postgres/values-prod.yaml |
+| N8N_API_KEY | n8n API key for Prometheus exporter |
 
 Pipeline runs automatically on every push to main: lint → create values from secrets → deploy → verify.
+
+
+## n8n Prometheus Exporter
+
+Custom Prometheus exporter that collects n8n metrics via the n8n API.
+
+**Metrics exposed:**
+- `n8n_up` — n8n reachability
+- `n8n_workflows_total` — total number of workflows
+- `n8n_workflows_active` — number of active workflows
+- `n8n_executions_total{status}` — executions by status (success/error/waiting)
+
+**CI/CD pipeline** (`.github/workflows/exporter.yml`):
+
+    lint (flake8) → test (pytest) → build multi-platform Docker → push to ghcr.io → deploy to k3s → rollback on failure
+
+**Docker image:** `ghcr.io/oni-wan-shinobi/n8n-exporter:latest`
+
+**Dockerfile:** multi-stage build (builder + minimal runtime), supports linux/amd64 and linux/arm64.
+
+Add `N8N_API_KEY` to GitHub Secrets to enable the exporter pipeline.
 
 ## SLI / SLO / SLA
 
@@ -437,6 +474,12 @@ Production-grade self-hosted платформа, построенная с ис�
     │   ├── cert-manager.yml
     │   ├── deploy-apps.yml
     │   └── vault.yml.example
+    ├── exporter/
+    │   ├── Dockerfile
+    │   ├── exporter.py
+    │   ├── test_exporter.py
+    │   ├── requirements.txt
+    │   └── .flake8
     └── helm/
         ├── n8n/
         │   ├── Chart.yaml
@@ -467,6 +510,15 @@ Production-grade self-hosted платформа, построенная с ис�
         │       ├── service.yaml
         │       ├── secret.yaml
         │       └── pvc.yaml
+        ├── n8n-exporter/
+        │   ├── Chart.yaml
+        │   ├── values.yaml
+        │   └── templates/
+        │       ├── deployment.yaml
+        │       ├── service.yaml
+        │       ├── servicemonitor.yaml
+        │       ├── secret.yaml
+        │       └── _helpers.tpl
         ├── monitoring/
         │   ├── values.yaml
         │   ├── values-prod.yaml.example
@@ -667,8 +719,30 @@ Loki работает в режиме **SingleBinary** — один под об�
 | N8N_VALUES_PROD | Содержимое helm/n8n/values-prod.yaml |
 | PGADMIN_VALUES_PROD | Содержимое helm/pgadmin/values-prod.yaml |
 | POSTGRES_VALUES_PROD | Содержимое helm/postgres/values-prod.yaml |
+| N8N_API_KEY | API ключ n8n для Prometheus exporter |
 
 Pipeline запускается автоматически при каждом push в main: lint → создание values из секретов → деплой → проверка.
+
+
+## n8n Prometheus Exporter
+
+Кастомный Prometheus exporter для сбора метрик n8n через API.
+
+**Метрики:**
+- `n8n_up` — доступность n8n
+- `n8n_workflows_total` — общее количество workflows
+- `n8n_workflows_active` — количество активных workflows
+- `n8n_executions_total{status}` — выполнения по статусу (success/error/waiting)
+
+**CI/CD pipeline** (`.github/workflows/exporter.yml`):
+
+    lint (flake8) → test (pytest) → build multi-platform Docker → push to ghcr.io → deploy to k3s → rollback при ошибке
+
+**Docker образ:** `ghcr.io/oni-wan-shinobi/n8n-exporter:latest`
+
+**Dockerfile:** multi-stage сборка (builder + минимальный runtime), поддержка linux/amd64 и linux/arm64.
+
+Добавьте `N8N_API_KEY` в GitHub Secrets для работы pipeline экспортера.
 
 ## SLI / SLO / SLA
 
