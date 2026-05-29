@@ -1,0 +1,14 @@
+---
+- name: Download server-activity script
+  get_url:
+    url: https://raw.githubusercontent.com/Oni-Wan-Shinobi/server-activity-telegram.sh/main/server-activity-telegram.sh
+    dest: /tmp/server-activity-telegram.sh
+    mode: '0755'
+
+- name: Run server-activity installer
+  shell: |
+    export TELEGRAM_BOT_TOKEN="{{ activity_telegram_token }}"
+    export TELEGRAM_CHAT_ID="{{ telegram_chat_id }}"
+    bash /tmp/server-activity-telegram.sh
+  args:
+    creates: /usr/local/bin/server-activity-telegram.sh
