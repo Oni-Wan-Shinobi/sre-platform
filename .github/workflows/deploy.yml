@@ -15,8 +15,8 @@ jobs:
       - name: Helm lint
         run: |
           helm lint helm/n8n --set ingress.enabled=false
-          helm lint helm/pgadmin
-          helm lint helm/postgres
+          helm lint helm/pgadmin --set service.type=ClusterIP --set ingress.enabled=false
+          helm lint helm/postgres --set service.type=ClusterIP
 
   deploy:
     name: Deploy
