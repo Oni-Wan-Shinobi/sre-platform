@@ -1,0 +1,96 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slo-rules
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: slo.n8n
+      interval: 30s
+      rules:
+        - record: job:n8n_http_requests_total:rate5m
+          expr: rate(traefik_service_requests_total{service=~"default-n8n.*"}[5m])
+
+        - record: job:n8n_http_errors_total:rate5m
+          expr: rate(traefik_service_requests_total{service=~"default-n8n.*", code=~"5.."}[5m])
+
+        - alert: N8nSLOBreach
+          expr: |
+            (
+              sum(job:n8n_http_errors_total:rate5m)
+              /
+              sum(job:n8n_http_requests_total:rate5m)
+            ) > 0.005
+          for: 5m
+          labels:
+            severity: critical
+            service: n8n
+          annotations:
+            summary: "n8n SLO breach — error rate above 0.5%"
+            description: "n8n error rate is {{ $value | humanizePercentage }}. SLO target: 99.5% success rate."
+            runbook: "https://github.com/Oni-Wan-Shinobi/sre-platform/blob/main/RUNBOOKS.md#rb-01--n8n-is-down"
+
+    - name: slo.postgres
+      interval: 30s
+      rules:
+        - alert: PostgresPodDown
+          expr: kube_pod_status_ready{pod=~"postgres.*", namespace="default"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: postgres
+          annotations:
+            summary: "PostgreSQL pod is not ready"
+            description: "PostgreSQL pod {{ $labels.pod }} has been not ready for more than 1 minute."
+            runbook: "https://github.com/Oni-Wan-Shinobi/sre-platform/blob/main/RUNBOOKS.md#rb-02--postgresql-is-down"
+
+    - name: slo.nodes
+      interval: 30s
+      rules:
+        - alert: NodeDown
+          expr: up{job="node-exporter"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            service: node
+          annotations:
+            summary: "Node is down"
+            description: "Node {{ $labels.instance }} has been unreachable for more than 2 minutes."
+            runbook: "https://github.com/Oni-Wan-Shinobi/sre-platform/blob/main/RUNBOOKS.md#rb-03--node-is-down"
+
+        - alert: HighCPUUsage
+          expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+          for: 10m
+          labels:
+            severity: warning
+            service: node
+          annotations:
+            summary: "High CPU usage on {{ $labels.instance }}"
+            description: "CPU usage is {{ $value | humanize }}% for more than 10 minutes."
+            runbook: "https://github.com/Oni-Wan-Shinobi/sre-platform/blob/main/RUNBOOKS.md#rb-04--high-cpu-usage"
+
+        - alert: HighMemoryUsage
+          expr: |
+            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+          for: 10m
+          labels:
+            severity: warning
+            service: node
+          annotations:
+            summary: "High memory usage on {{ $labels.instance }}"
+            description: "Memory usage is {{ $value | humanize }}% for more than 10 minutes."
+            runbook: "https://github.com/Oni-Wan-Shinobi/sre-platform/blob/main/RUNBOOKS.md#rb-05--high-memory-usage"
+
+        - alert: DiskSpaceLow
+          expr: |
+            (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            service: node
+          annotations:
+            summary: "Disk space low on {{ $labels.instance }}"
+            description: "Disk usage is {{ $value | humanize }}% on {{ $labels.mountpoint }}."
+            runbook: "https://github.com/Oni-Wan-Shinobi/sre-platform/blob/main/RUNBOOKS.md#rb-06--disk-space-low"
