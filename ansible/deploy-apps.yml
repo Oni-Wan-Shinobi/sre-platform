@@ -7,9 +7,32 @@
       shell: |
         helm upgrade --install n8n {{ playbook_dir }}/../helm/n8n \
           --namespace default \
-          --values {{ playbook_dir }}/../helm/n8n/values-prod.yaml
-      register: helm_output
+          --values {{ playbook_dir }}/../helm/n8n/values.yaml \
+          --values {{ playbook_dir }}/../helm/n8n/values-prod.yaml \
+          --wait --timeout 120s
+      register: n8n_output
+
+    - name: Deploy pgadmin
+      shell: |
+        helm upgrade --install pgadmin {{ playbook_dir }}/../helm/pgadmin \
+          --namespace default \
+          --values {{ playbook_dir }}/../helm/pgadmin/values.yaml \
+          --values {{ playbook_dir }}/../helm/pgadmin/values-prod.yaml \
+          --wait --timeout 120s
+      register: pgadmin_output
+
+    - name: Deploy postgres
+      shell: |
+        helm upgrade --install postgres {{ playbook_dir }}/../helm/postgres \
+          --namespace default \
+          --values {{ playbook_dir }}/../helm/postgres/values.yaml \
+          --values {{ playbook_dir }}/../helm/postgres/values-prod.yaml \
+          --wait --timeout 120s
+      register: postgres_output
 
     - name: Print deploy status
       debug:
-        msg: "{{ helm_output.stdout }}"
+        msg:
+          - "n8n: {{ n8n_output.stdout_lines[-1] }}"
+          - "pgadmin: {{ pgadmin_output.stdout_lines[-1] }}"
+          - "postgres: {{ postgres_output.stdout_lines[-1] }}"

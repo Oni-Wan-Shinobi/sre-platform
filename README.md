@@ -103,6 +103,7 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
         │       └── _helpers.tpl
         ├── pgadmin/
         │   ├── Chart.yaml
+        │   ├── values.yaml
         │   ├── values-prod.yaml.example
         │   └── templates/
         │       ├── deployment.yaml
@@ -111,6 +112,7 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
         │       └── pvc.yaml
         ├── postgres/
         │   ├── Chart.yaml
+        │   ├── values.yaml
         │   ├── values-prod.yaml.example
         │   └── templates/
         │       ├── statefulset.yaml
@@ -255,8 +257,9 @@ Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
 
 Manual Helm deploys:
 
-    helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
-    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default
+    helm upgrade --install n8n ~/sre-platform/helm/n8n --namespace default --values helm/n8n/values.yaml --values helm/n8n/values-prod.yaml
+    helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default --values helm/pgadmin/values.yaml --values helm/pgadmin/values-prod.yaml
+    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml
 
 ### Step 8 — Logging stack (Loki + Alloy)
 
@@ -290,6 +293,35 @@ Connect Loki to Grafana: Connections → Data sources → Add → Loki → URL:
 
 Forces all HTTP traffic to redirect to HTTPS with a 301 permanent redirect.
 
+
+### Step 10 — CI/CD (GitHub Actions)
+
+Set up a self-hosted runner on sre-main:
+
+    mkdir -p ~/actions-runner && cd ~/actions-runner
+    curl -o actions-runner-linux-x64-2.334.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.334.0/actions-runner-linux-x64-2.334.0.tar.gz
+    tar xzf ./actions-runner-linux-x64-2.334.0.tar.gz
+    ./config.sh --url https://github.com/YOUR_USERNAME/sre-platform --token YOUR_TOKEN
+    ./svc.sh install github-runner
+    ./svc.sh start
+
+Copy kubeconfig to runner user:
+
+    mkdir -p /home/github-runner/.kube
+    cp /root/.kube/config /home/github-runner/.kube/config
+    chown -R github-runner:github-runner /home/github-runner/.kube
+    chmod 600 /home/github-runner/.kube/config
+
+Add the following GitHub Secrets in repository Settings → Secrets and variables → Actions:
+
+| Secret | Contains |
+|--------|----------|
+| N8N_VALUES_PROD | Contents of helm/n8n/values-prod.yaml |
+| PGADMIN_VALUES_PROD | Contents of helm/pgadmin/values-prod.yaml |
+| POSTGRES_VALUES_PROD | Contents of helm/postgres/values-prod.yaml |
+
+Pipeline runs automatically on every push to main: lint → create values from secrets → deploy → verify.
+
 ## SLI / SLO / SLA
 
 | Alert | SLO | Threshold | Runbook |
@@ -317,6 +349,8 @@ Post-mortem template for incident analysis: [POSTMORTEM_TEMPLATE.md](POSTMORTEM_
 - **Terraform S3 backend**: state stored remotely in Hetzner Object Storage
 - **Secrets management**: all tokens and keys stored outside git in vault.yml / tfvars files
 - **node-exporter**: port 9100 open only for internal networks (10.0.1.0/24, 10.42.0.0/16), managed via Ansible
+- **SSH hardening**: password authentication disabled, pubkey only, MaxAuthTries 3, X11 forwarding disabled
+- **CI/CD secrets**: production values stored in GitHub Secrets, never in git
 
 <div align="right"><a href="#english">👆 English</a> · <a href="#russian">👇 Русский</a></div>
 
@@ -417,6 +451,7 @@ Production-grade self-hosted платформа, построенная с ис�
         │       └── _helpers.tpl
         ├── pgadmin/
         │   ├── Chart.yaml
+        │   ├── values.yaml
         │   ├── values-prod.yaml.example
         │   └── templates/
         │       ├── deployment.yaml
@@ -425,6 +460,7 @@ Production-grade self-hosted платформа, построенная с ис�
         │       └── pvc.yaml
         ├── postgres/
         │   ├── Chart.yaml
+        │   ├── values.yaml
         │   ├── values-prod.yaml.example
         │   └── templates/
         │       ├── statefulset.yaml
@@ -569,8 +605,9 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
 
 Деплой вручную через Helm:
 
-    helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
-    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default
+    helm upgrade --install n8n ~/sre-platform/helm/n8n --namespace default --values helm/n8n/values.yaml --values helm/n8n/values-prod.yaml
+    helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default --values helm/pgadmin/values.yaml --values helm/pgadmin/values-prod.yaml
+    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml
 
 ### Шаг 8 — Логирование (Loki + Alloy)
 
@@ -604,6 +641,35 @@ Loki работает в режиме **SingleBinary** — один под об�
 
 Принудительно перенаправляет весь HTTP трафик на HTTPS с кодом 301.
 
+
+### Шаг 10 — CI/CD (GitHub Actions)
+
+Установите self-hosted runner на sre-main:
+
+    mkdir -p ~/actions-runner && cd ~/actions-runner
+    curl -o actions-runner-linux-x64-2.334.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.334.0/actions-runner-linux-x64-2.334.0.tar.gz
+    tar xzf ./actions-runner-linux-x64-2.334.0.tar.gz
+    ./config.sh --url https://github.com/ВАШ_USERNAME/sre-platform --token ВАШ_ТОКЕН
+    ./svc.sh install github-runner
+    ./svc.sh start
+
+Скопируйте kubeconfig для пользователя runner:
+
+    mkdir -p /home/github-runner/.kube
+    cp /root/.kube/config /home/github-runner/.kube/config
+    chown -R github-runner:github-runner /home/github-runner/.kube
+    chmod 600 /home/github-runner/.kube/config
+
+Добавьте GitHub Secrets в Settings → Secrets and variables → Actions:
+
+| Секрет | Содержимое |
+|--------|------------|
+| N8N_VALUES_PROD | Содержимое helm/n8n/values-prod.yaml |
+| PGADMIN_VALUES_PROD | Содержимое helm/pgadmin/values-prod.yaml |
+| POSTGRES_VALUES_PROD | Содержимое helm/postgres/values-prod.yaml |
+
+Pipeline запускается автоматически при каждом push в main: lint → создание values из секретов → деплой → проверка.
+
 ## SLI / SLO / SLA
 
 | Алерт | SLO | Порог | Runbook |
@@ -631,5 +697,7 @@ Loki работает в режиме **SingleBinary** — один под об�
 - **Terraform S3 backend**: state хранится удалённо в Hetzner Object Storage
 - **Управление секретами**: все токены и ключи хранятся вне git в vault.yml / tfvars файлах
 - **node-exporter**: порт 9100 открыт только для внутренних сетей (10.0.1.0/24, 10.42.0.0/16), управляется через Ansible
+- **SSH hardening**: аутентификация по паролю отключена, только pubkey, MaxAuthTries 3, X11 forwarding отключён
+- **CI/CD секреты**: продовые values хранятся в GitHub Secrets, никогда не в git
 
 <div align="right"><a href="#russian">👆 Наверх</a> · <a href="#english">👆 English</a></div>
