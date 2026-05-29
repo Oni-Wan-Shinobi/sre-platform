@@ -283,6 +283,13 @@ Connect Loki to Grafana: Connections → Data sources → Add → Loki → URL:
 
     http://loki-gateway.monitoring.svc.cluster.local
 
+
+### Step 9 — HTTP to HTTPS redirect (Traefik)
+
+    kubectl apply -f helm/traefik-redirect.yaml
+
+Forces all HTTP traffic to redirect to HTTPS with a 301 permanent redirect.
+
 ## SLI / SLO / SLA
 
 | Alert | SLO | Threshold | Runbook |
@@ -589,6 +596,13 @@ Loki работает в режиме **SingleBinary** — один под об�
 Подключить Loki к Grafana: Connections → Data sources → Add → Loki → URL:
 
     http://loki-gateway.monitoring.svc.cluster.local
+
+
+### Шаг 9 — Редирект HTTP → HTTPS (Traefik)
+
+    kubectl apply -f helm/traefik-redirect.yaml
+
+Принудительно перенаправляет весь HTTP трафик на HTTPS с кодом 301.
 
 ## SLI / SLO / SLA
 
