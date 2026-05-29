@@ -24,6 +24,16 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+      - name: Create production values from secrets
+        env:
+          N8N_VALUES_PROD: ${{ secrets.N8N_VALUES_PROD }}
+          PGADMIN_VALUES_PROD: ${{ secrets.PGADMIN_VALUES_PROD }}
+          POSTGRES_VALUES_PROD: ${{ secrets.POSTGRES_VALUES_PROD }}
+        run: |
+          echo "$N8N_VALUES_PROD" > helm/n8n/values-prod.yaml
+          echo "$PGADMIN_VALUES_PROD" > helm/pgadmin/values-prod.yaml
+          echo "$POSTGRES_VALUES_PROD" > helm/postgres/values-prod.yaml
+
       - name: Apply SLO rules
         run: kubectl apply -f helm/monitoring/templates/slo-rules.yaml
       - name: Deploy n8n
