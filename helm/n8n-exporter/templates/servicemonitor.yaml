@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "n8n-exporter.fullname" . }}
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "n8n-exporter.fullname" . }}
+  namespaceSelector:
+    matchNames:
+      - default
+  endpoints:
+    - port: 9101
+      path: /metrics
+      interval: 30s

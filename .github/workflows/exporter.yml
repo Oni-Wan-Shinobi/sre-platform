@@ -1,0 +1,87 @@
+name: Build and Deploy n8n Exporter
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'exporter/**'
+      - 'helm/n8n-exporter/**'
+      - '.github/workflows/exporter.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/oni-wan-shinobi/n8n-exporter
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pip3 install flake8
+      - name: Flake8
+        run: flake8 exporter/exporter.py exporter/test_exporter.py
+
+  test:
+    name: Test
+    runs-on: self-hosted
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pip3 install -r exporter/requirements.txt
+      - name: Pytest
+        run: cd exporter && python3 -m pytest test_exporter.py -v
+
+  build:
+    name: Build and Push Docker
+    runs-on: self-hosted
+    needs: test
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate image tag
+        id: tag
+        run: echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+                       -t ${{ env.IMAGE_NAME }}:latest \
+                       exporter/
+
+      - name: Push to ghcr.io
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          docker push ${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create API key secret
+        env:
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+        run: |
+          helm upgrade --install n8n-exporter helm/n8n-exporter \
+            --namespace default \
+            --set image.tag=${{ needs.build.outputs.image_tag }} \
+            --set env.N8N_API_KEY=$N8N_API_KEY \
+            --wait --timeout 120s
+
+      - name: Verify deployment
+        run: kubectl rollout status deployment/n8n-exporter-n8n-exporter -n default --timeout=60s
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed, rolling back..."
+          helm rollback n8n-exporter -n default
