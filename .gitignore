@@ -18,3 +18,5 @@ ansible/inventory.ini
 helm/*/values-prod.yaml
 helm/pgadmin/values-prod.yaml
 helm/postgres/values-prod.yaml
+__pycache__/
+*.pyc
