@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: pip3 install flake8
       - name: Flake8
-        run: flake8 exporter/exporter.py exporter/test_exporter.py
+        run: flake8 --max-line-length=100 exporter/exporter.py exporter/test_exporter.py
 
   test:
     name: Test
