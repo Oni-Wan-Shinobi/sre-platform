@@ -2,6 +2,8 @@
 - name: Install cert-manager and configure TLS
   hosts: sre-main
   become: true
+  vars_files:
+    - vault.yml
   tasks:
     - name: Add jetstack helm repo
       shell: helm repo add jetstack https://charts.jetstack.io && helm repo update
@@ -30,7 +32,7 @@
         spec:
           acme:
             server: https://acme-v02.api.letsencrypt.org/directory
-            email: vladimirgriboedov855@gmail.com
+            email: "{{ letsencrypt_email }}"
             privateKeySecretRef:
               name: letsencrypt-prod
             solvers:
