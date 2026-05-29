@@ -59,10 +59,13 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 | 443 | TCP | HTTPS |
 | 6443 | TCP | k3s API server |
 | 8472 | UDP | Flannel VXLAN (CNI pod networking) |
+| 9100 | TCP | node-exporter (internal only: 10.0.1.0/24, 10.42.0.0/16) |
 
 ## Repository Structure
 
     sre-platform/
+    ├── RUNBOOKS.md
+    ├── POSTMORTEM_TEMPLATE.md
     ├── terraform/
     │   ├── main.tf
     │   ├── variables.tf
@@ -176,9 +179,10 @@ Use .example files as templates.
 
 ### 2. Telegram bots
 
-Create two bots via @BotFather in Telegram:
+Create three bots via @BotFather in Telegram:
 - Bot 1: for fail2ban SSH brute-force alerts
 - Bot 2: for server activity monitoring
+- Bot 3: for Alertmanager infrastructure alerts (@sre_platform_alerts_bot)
 
 Get your Chat ID by sending a message to the bot and opening:
 https://api.telegram.org/botYOUR_TOKEN/getUpdates
@@ -235,6 +239,8 @@ Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
       --namespace monitoring --create-namespace \
       --values helm/monitoring/values.yaml \
       --values helm/monitoring/values-prod.yaml
+
+    kubectl apply -f helm/monitoring/templates/slo-rules.yaml
 
 ### Step 7 — Deploy applications
 
@@ -303,6 +309,7 @@ Post-mortem template for incident analysis: [POSTMORTEM_TEMPLATE.md](POSTMORTEM_
 - **iptables-persistent**: firewall rules survive reboots
 - **Terraform S3 backend**: state stored remotely in Hetzner Object Storage
 - **Secrets management**: all tokens and keys stored outside git in vault.yml / tfvars files
+- **node-exporter**: port 9100 open only for internal networks (10.0.1.0/24, 10.42.0.0/16), managed via Ansible
 
 <div align="right"><a href="#english">👆 English</a> · <a href="#russian">👇 Русский</a></div>
 
@@ -359,10 +366,13 @@ Production-grade self-hosted платформа, построенная с ис�
 | 443 | TCP | HTTPS |
 | 6443 | TCP | k3s API сервер |
 | 8472 | UDP | Flannel VXLAN (CNI сеть между подами) |
+| 9100 | TCP | node-exporter (только внутри: 10.0.1.0/24, 10.42.0.0/16) |
 
 ## Структура репозитория
 
     sre-platform/
+    ├── RUNBOOKS.md
+    ├── POSTMORTEM_TEMPLATE.md
     ├── terraform/
     │   ├── main.tf
     │   ├── variables.tf
@@ -476,9 +486,10 @@ Production-grade self-hosted платформа, построенная с ис�
 
 ### 2. Telegram боты
 
-Создайте два бота через @BotFather в Telegram:
+Создайте три бота через @BotFather в Telegram:
 - Бот 1: для алертов fail2ban о попытках брутфорса SSH
 - Бот 2: для мониторинга активности сервера
+- Бот 3: для алертов Alertmanager об инфраструктуре (@sre_platform_alerts_bot)
 
 Узнайте ваш Chat ID — отправьте боту любое сообщение и откройте:
 https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
@@ -535,6 +546,8 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
       --namespace monitoring --create-namespace \
       --values helm/monitoring/values.yaml \
       --values helm/monitoring/values-prod.yaml
+
+    kubectl apply -f helm/monitoring/templates/slo-rules.yaml
 
 ### Шаг 7 — Деплой приложений
 
@@ -603,5 +616,6 @@ Loki работает в режиме **SingleBinary** — один под об�
 - **iptables-persistent**: правила файрвола сохраняются после перезагрузки
 - **Terraform S3 backend**: state хранится удалённо в Hetzner Object Storage
 - **Управление секретами**: все токены и ключи хранятся вне git в vault.yml / tfvars файлах
+- **node-exporter**: порт 9100 открыт только для внутренних сетей (10.0.1.0/24, 10.42.0.0/16), управляется через Ansible
 
 <div align="right"><a href="#russian">👆 Наверх</a> · <a href="#english">👆 English</a></div>

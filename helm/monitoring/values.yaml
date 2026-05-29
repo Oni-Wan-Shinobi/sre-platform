@@ -1,6 +1,5 @@
 # kube-prometheus-stack values
 # Prometheus + Grafana + Alertmanager + node-exporter + kube-state-metrics
-
 grafana:
   enabled: true
   ingress:
@@ -19,6 +18,21 @@ prometheus:
           resources:
             requests:
               storage: 10Gi
+    additionalScrapeConfigs:
+      - job_name: node-exporter-internal
+        static_configs:
+          - targets:
+              - 10.0.1.10:9100
+              - 10.0.1.11:9100
+        relabel_configs:
+          - source_labels: [__address__]
+            regex: '10\.0\.1\.10:.*'
+            target_label: node
+            replacement: sre-node-1
+          - source_labels: [__address__]
+            regex: '10\.0\.1\.11:.*'
+            target_label: node
+            replacement: sre-node-2
 
 alertmanager:
   enabled: true
@@ -33,6 +47,11 @@ alertmanager:
 
 nodeExporter:
   enabled: true
+
+prometheus-node-exporter:
+  prometheus:
+    monitor:
+      enabled: false
 
 kubeStateMetrics:
   enabled: true

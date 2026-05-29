@@ -32,26 +32,46 @@
     rule: allow
     port: "22"
     proto: tcp
+  tags: ufw
 
 - name: Configure UFW - allow HTTP
   ufw:
     rule: allow
     port: "80"
     proto: tcp
+  tags: ufw
 
 - name: Configure UFW - allow HTTPS
   ufw:
     rule: allow
     port: "443"
     proto: tcp
+  tags: ufw
 
 - name: Enable UFW
   ufw:
     state: enabled
     policy: deny
+  tags: ufw
 
 - name: Enable and start fail2ban
   systemd:
     name: fail2ban
     enabled: yes
     state: started
+- name: Configure UFW - allow node-exporter from internal network
+  ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp
+    src: "10.0.1.0/24"
+    comment: "node-exporter internal"
+  tags: ufw
+- name: Configure UFW - allow node-exporter from pod network (Flannel)
+  ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp
+    src: "10.42.0.0/16"
+    comment: "node-exporter flannel pod network"
+  tags: ufw

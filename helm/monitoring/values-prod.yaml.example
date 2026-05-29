@@ -1,6 +1,5 @@
 # Скопируйте в values-prod.yaml и заполните своими значениями
 # cp values-prod.yaml.example values-prod.yaml
-
 grafana:
   adminPassword: "ВАШ_НАДЁЖНЫЙ_ПАРОЛЬ"
   ingress:
@@ -10,3 +9,64 @@ grafana:
       - secretName: grafana-tls
         hosts:
           - grafana.ВАШ_ДОМЕН
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+    inhibit_rules:
+      - source_matchers:
+          - 'severity = critical'
+        target_matchers:
+          - 'severity =~ warning|info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'severity = warning'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'alertname = InfoInhibitor'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+      - target_matchers:
+          - 'alertname = InfoInhibitor'
+      - target_matchers:
+          - alertname =~ "KubeSchedulerDown|KubeControllerManagerDown|KubeProxyDown|KubeletInstanceUnreachable"
+    route:
+      group_by: ['alertname', 'service']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: telegram
+      routes:
+        - receiver: 'null'
+          matchers:
+            - alertname = "Watchdog"
+        # k3s: disable false alerts for components built into k3s
+        - receiver: 'null'
+          matchers:
+            - alertname =~ "KubeSchedulerDown|KubeControllerManagerDown|KubeProxyDown|KubeletInstanceUnreachable|TargetDown"
+    receivers:
+      - name: 'null'
+      - name: telegram
+        telegram_configs:
+          - bot_token: "ВАШ_ТОКЕН_БОТА"
+            chat_id: ВАШ_CHAT_ID
+            message: |
+              {{ range .Alerts }}
+              {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} *{{ .Labels.alertname }}*
+              *Service:* {{ .Labels.service }}
+              *Severity:* {{ .Labels.severity }}
+              {{ .Annotations.summary }}
+              {{ .Annotations.description }}
+              {{ if .Annotations.runbook }}📖 [Runbook]({{ .Annotations.runbook }}){{ end }}
+              {{ end }}
+            parse_mode: Markdown
+    templates:
+      - '/etc/alertmanager/config/*.tmpl'
