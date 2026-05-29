@@ -67,7 +67,13 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
     │   └── terraform.tfvars.example
     ├── ansible/
     │   ├── roles/
-    │   │   └── common/
+    │   │   ├── common/
+    │   │   │   └── tasks/
+    │   │   │       └── main.yml
+    │   │   ├── fail2ban_telegram/
+    │   │   │   └── tasks/
+    │   │   │       └── main.yml
+    │   │   └── server_activity/
     │   │       └── tasks/
     │   │           └── main.yml
     │   ├── inventory.ini.example
@@ -295,7 +301,13 @@ Production-grade self-hosted платформа, построенная с ис�
     │   └── terraform.tfvars.example
     ├── ansible/
     │   ├── roles/
-    │   │   └── common/
+    │   │   ├── common/
+    │   │   │   └── tasks/
+    │   │   │       └── main.yml
+    │   │   ├── fail2ban_telegram/
+    │   │   │   └── tasks/
+    │   │   │       └── main.yml
+    │   │   └── server_activity/
     │   │       └── tasks/
     │   │           └── main.yml
     │   ├── inventory.ini.example
