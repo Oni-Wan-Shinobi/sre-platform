@@ -27,7 +27,10 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 - **Ingress**: Traefik (built into k3s)
 - **TLS**: cert-manager + Let's Encrypt
 - **Security**: UFW, fail2ban + Telegram alerts, iptables-persistent
-- **Monitoring**: Telegram bots for SSH brute-force alerts and server activity
+- **Monitoring**: Prometheus + Grafana + Alertmanager + node-exporter + kube-state-metrics
+- **Logging**: Loki + promtail
+- **Alerting**: Alertmanager + Telegram notifications
+- **Bots**: Telegram bots for SSH brute-force alerts and server activity
 - **Applications**: n8n (workflow automation), pgAdmin (PostgreSQL management), PostgreSQL (database)
 
 ## Infrastructure
@@ -103,14 +106,17 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
         │       ├── service.yaml
         │       ├── ingress.yaml
         │       └── pvc.yaml
-        └── postgres/
-            ├── Chart.yaml
-            ├── values-prod.yaml.example
-            └── templates/
-                ├── statefulset.yaml
-                ├── service.yaml
-                ├── secret.yaml
-                └── pvc.yaml
+        ├── postgres/
+        │   ├── Chart.yaml
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       ├── statefulset.yaml
+        │       ├── service.yaml
+        │       ├── secret.yaml
+        │       └── pvc.yaml
+        └── monitoring/
+            ├── values.yaml
+            └── values-prod.yaml.example
 
 ## Secrets
 
@@ -125,6 +131,7 @@ Never commit to git:
 | helm/n8n/values-prod.yaml | Domain, production configuration |
 | helm/pgadmin/values.yaml | Domain, pgAdmin credentials |
 | helm/postgres/values.yaml | Database name, username, password |
+| helm/monitoring/values-prod.yaml | Grafana password, Telegram alerts config |
 
 Use .example files as templates.
 
@@ -212,7 +219,17 @@ Installs Helm and kubectl on sre-main, fetches kubeconfig from master.
 
 Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
 
-### Step 6 — Deploy applications
+### Step 6 — Monitoring stack
+
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+    cp helm/monitoring/values-prod.yaml.example helm/monitoring/values-prod.yaml
+    helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+      --namespace monitoring --create-namespace \
+      --values helm/monitoring/values.yaml \
+      --values helm/monitoring/values-prod.yaml
+
+### Step 7 — Deploy applications
 
     cd helm/n8n
     cp values-prod.yaml.example values-prod.yaml
@@ -261,7 +278,10 @@ Production-grade self-hosted платформа, построенная с ис�
 - **Ingress**: Traefik (встроен в k3s)
 - **TLS**: cert-manager + Let's Encrypt
 - **Безопасность**: UFW, fail2ban + Telegram-уведомления, iptables-persistent
-- **Мониторинг**: Telegram-боты для алертов о брутфорсе SSH и активности сервера
+- **Мониторинг**: Prometheus + Grafana + Alertmanager + node-exporter + kube-state-metrics
+- **Логирование**: Loki + promtail
+- **Алертинг**: Alertmanager + Telegram-уведомления
+- **Боты**: Telegram-боты для алертов о брутфорсе SSH и активности сервера
 - **Приложения**: n8n (автоматизация рабочих процессов), pgAdmin (управление PostgreSQL), PostgreSQL (база данных)
 
 ## Инфраструктура
@@ -337,14 +357,17 @@ Production-grade self-hosted платформа, построенная с ис�
         │       ├── service.yaml
         │       ├── ingress.yaml
         │       └── pvc.yaml
-        └── postgres/
-            ├── Chart.yaml
-            ├── values-prod.yaml.example
-            └── templates/
-                ├── statefulset.yaml
-                ├── service.yaml
-                ├── secret.yaml
-                └── pvc.yaml
+        ├── postgres/
+        │   ├── Chart.yaml
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       ├── statefulset.yaml
+        │       ├── service.yaml
+        │       ├── secret.yaml
+        │       └── pvc.yaml
+        └── monitoring/
+            ├── values.yaml
+            └── values-prod.yaml.example
 
 ## Секреты
 
@@ -359,6 +382,7 @@ Production-grade self-hosted платформа, построенная с ис�
 | helm/n8n/values-prod.yaml | Домен, продовая конфигурация |
 | helm/pgadmin/values.yaml | Домен, учётные данные pgAdmin |
 | helm/postgres/values.yaml | Имя базы, имя пользователя, пароль |
+| helm/monitoring/values-prod.yaml | Пароль Grafana, конфиг Telegram алертов |
 
 Используйте .example файлы как шаблоны.
 
@@ -446,7 +470,17 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
 
 Устанавливает cert-manager и создаёт Let's Encrypt ClusterIssuer.
 
-### Шаг 6 — Деплой приложений
+### Шаг 6 — Мониторинг
+
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+    cp helm/monitoring/values-prod.yaml.example helm/monitoring/values-prod.yaml
+    helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+      --namespace monitoring --create-namespace \
+      --values helm/monitoring/values.yaml \
+      --values helm/monitoring/values-prod.yaml
+
+### Шаг 7 — Деплой приложений
 
     cd helm/n8n
     cp values-prod.yaml.example values-prod.yaml
