@@ -1,0 +1,6 @@
+# cp values-prod.yaml.example values-prod.yaml
+loki:
+  storage:
+    s3:
+      access_key_id: "ВАШ_S3_ACCESS_KEY"
+      secret_access_key: "ВАШ_S3_SECRET_KEY"

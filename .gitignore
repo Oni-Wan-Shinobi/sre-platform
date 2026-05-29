@@ -3,6 +3,7 @@ terraform/.terraform/
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/terraform.tfvars
+terraform/backend.tfvars
 terraform/*.tar.gz
 terraform/docs/
 terraform/LICENSE
@@ -11,9 +12,9 @@ terraform/README.md
 # Secrets
 *.tfvars
 ansible/vault.yml
-helm/*/values-prod.yaml
-terraform/backend.tfvars
-helm/pgadmin/values.yaml
 ansible/inventory.ini
+
+# Helm production values
+helm/*/values-prod.yaml
+helm/pgadmin/values.yaml
 helm/postgres/values.yaml
-helm/monitoring/values-prod.yaml

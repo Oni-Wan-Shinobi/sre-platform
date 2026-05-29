@@ -28,7 +28,7 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 - **TLS**: cert-manager + Let's Encrypt
 - **Security**: UFW, fail2ban + Telegram alerts, iptables-persistent
 - **Monitoring**: Prometheus + Grafana + Alertmanager + node-exporter + kube-state-metrics
-- **Logging**: Loki + promtail
+- **Logging**: Loki + Alloy
 - **Alerting**: Alertmanager + Telegram notifications
 - **Bots**: Telegram bots for SSH brute-force alerts and server activity
 - **Applications**: n8n (workflow automation), pgAdmin (PostgreSQL management), PostgreSQL (database)
@@ -114,9 +114,13 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
         │       ├── service.yaml
         │       ├── secret.yaml
         │       └── pvc.yaml
-        └── monitoring/
+        ├── monitoring/
+        │   ├── values.yaml
+        │   └── values-prod.yaml.example
+        └── loki/
             ├── values.yaml
-            └── values-prod.yaml.example
+            ├── values-prod.yaml.example
+            └── alloy-values.yaml
 
 ## Secrets
 
@@ -132,6 +136,7 @@ Never commit to git:
 | helm/pgadmin/values.yaml | Domain, pgAdmin credentials |
 | helm/postgres/values.yaml | Database name, username, password |
 | helm/monitoring/values-prod.yaml | Grafana password, Telegram alerts config |
+| helm/loki/values-prod.yaml | Loki S3 access key and secret key |
 
 Use .example files as templates.
 
@@ -245,6 +250,31 @@ Manual Helm deploys:
     helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
     helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default
 
+### Step 8 — Logging stack (Loki + Alloy)
+
+Loki runs in **SingleBinary** mode — one pod handles both reads and writes.
+This is suitable for single-node or small clusters. Scale vertically by increasing pod resources.
+
+> **Note:** Cache is disabled by default (`chunksCache.enabled: false`, `resultsCache.enabled: false`).
+> Enable it in `helm/loki/values.yaml` if your server has enough memory (recommended: 1GB+ free).
+
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo update
+    cp helm/loki/values-prod.yaml.example helm/loki/values-prod.yaml
+    # Fill in your S3 credentials in values-prod.yaml
+    helm upgrade --install loki grafana/loki \
+      --namespace monitoring \
+      --values helm/loki/values.yaml \
+      --values helm/loki/values-prod.yaml
+
+    helm upgrade --install alloy grafana/alloy \
+      --namespace monitoring \
+      --values helm/loki/alloy-values.yaml
+
+Connect Loki to Grafana: Connections → Data sources → Add → Loki → URL:
+
+    http://loki-gateway.monitoring.svc.cluster.local
+
 ## Security
 
 - **UFW**: only ports 22, 80, 443, 6443, 8472 open; all else denied
@@ -279,7 +309,7 @@ Production-grade self-hosted платформа, построенная с ис�
 - **TLS**: cert-manager + Let's Encrypt
 - **Безопасность**: UFW, fail2ban + Telegram-уведомления, iptables-persistent
 - **Мониторинг**: Prometheus + Grafana + Alertmanager + node-exporter + kube-state-metrics
-- **Логирование**: Loki + promtail
+- **Логирование**: Loki + Alloy
 - **Алертинг**: Alertmanager + Telegram-уведомления
 - **Боты**: Telegram-боты для алертов о брутфорсе SSH и активности сервера
 - **Приложения**: n8n (автоматизация рабочих процессов), pgAdmin (управление PostgreSQL), PostgreSQL (база данных)
@@ -365,9 +395,13 @@ Production-grade self-hosted платформа, построенная с ис�
         │       ├── service.yaml
         │       ├── secret.yaml
         │       └── pvc.yaml
-        └── monitoring/
+        ├── monitoring/
+        │   ├── values.yaml
+        │   └── values-prod.yaml.example
+        └── loki/
             ├── values.yaml
-            └── values-prod.yaml.example
+            ├── values-prod.yaml.example
+            └── alloy-values.yaml
 
 ## Секреты
 
@@ -383,6 +417,7 @@ Production-grade self-hosted платформа, построенная с ис�
 | helm/pgadmin/values.yaml | Домен, учётные данные pgAdmin |
 | helm/postgres/values.yaml | Имя базы, имя пользователя, пароль |
 | helm/monitoring/values-prod.yaml | Пароль Grafana, конфиг Telegram алертов |
+| helm/loki/values-prod.yaml | S3 access key и secret key для Loki |
 
 Используйте .example файлы как шаблоны.
 
@@ -495,6 +530,31 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
 
     helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default
     helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default
+
+### Шаг 8 — Логирование (Loki + Alloy)
+
+Loki работает в режиме **SingleBinary** — один под обрабатывает и чтение, и запись.
+Подходит для одиночных нод и небольших кластеров. Масштабируется вертикально увеличением ресурсов пода.
+
+> **Примечание:** Кэш отключён по умолчанию (`chunksCache.enabled: false`, `resultsCache.enabled: false`).
+> Включите в `helm/loki/values.yaml` если сервер позволяет (рекомендуется: 1GB+ свободной памяти).
+
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo update
+    cp helm/loki/values-prod.yaml.example helm/loki/values-prod.yaml
+    # Заполните S3 ключи в values-prod.yaml
+    helm upgrade --install loki grafana/loki \
+      --namespace monitoring \
+      --values helm/loki/values.yaml \
+      --values helm/loki/values-prod.yaml
+
+    helm upgrade --install alloy grafana/alloy \
+      --namespace monitoring \
+      --values helm/loki/alloy-values.yaml
+
+Подключить Loki к Grafana: Connections → Data sources → Add → Loki → URL:
+
+    http://loki-gateway.monitoring.svc.cluster.local
 
 ## Безопасность
 
