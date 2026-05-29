@@ -116,7 +116,9 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
         │       └── pvc.yaml
         ├── monitoring/
         │   ├── values.yaml
-        │   └── values-prod.yaml.example
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       └── slo-rules.yaml
         └── loki/
             ├── values.yaml
             ├── values-prod.yaml.example
@@ -275,6 +277,23 @@ Connect Loki to Grafana: Connections → Data sources → Add → Loki → URL:
 
     http://loki-gateway.monitoring.svc.cluster.local
 
+## SLI / SLO / SLA
+
+| Alert | SLO | Threshold | Runbook |
+|-------|-----|-----------|---------|
+| N8nSLOBreach | 99.5% success rate | error rate > 0.5% for 5m | [RB-01](RUNBOOKS.md#rb-01--n8n-is-down) |
+| PostgresPodDown | pod always ready | not ready > 1m | [RB-02](RUNBOOKS.md#rb-02--postgresql-is-down) |
+| NodeDown | node always up | unreachable > 2m | [RB-03](RUNBOOKS.md#rb-03--node-is-down) |
+| HighCPUUsage | CPU < 85% | > 85% for 10m | [RB-04](RUNBOOKS.md#rb-04--high-cpu-usage) |
+| HighMemoryUsage | Memory < 85% | > 85% for 10m | [RB-05](RUNBOOKS.md#rb-05--high-memory-usage) |
+| DiskSpaceLow | Disk < 80% | > 80% for 5m | [RB-06](RUNBOOKS.md#rb-06--disk-space-low) |
+
+## Runbooks & Incident Response
+
+Operational playbooks for every alert: [RUNBOOKS.md](RUNBOOKS.md)
+
+Post-mortem template for incident analysis: [POSTMORTEM_TEMPLATE.md](POSTMORTEM_TEMPLATE.md)
+
 ## Security
 
 - **UFW**: only ports 22, 80, 443, 6443, 8472 open; all else denied
@@ -397,7 +416,9 @@ Production-grade self-hosted платформа, построенная с ис�
         │       └── pvc.yaml
         ├── monitoring/
         │   ├── values.yaml
-        │   └── values-prod.yaml.example
+        │   ├── values-prod.yaml.example
+        │   └── templates/
+        │       └── slo-rules.yaml
         └── loki/
             ├── values.yaml
             ├── values-prod.yaml.example
@@ -555,6 +576,23 @@ Loki работает в режиме **SingleBinary** — один под об�
 Подключить Loki к Grafana: Connections → Data sources → Add → Loki → URL:
 
     http://loki-gateway.monitoring.svc.cluster.local
+
+## SLI / SLO / SLA
+
+| Алерт | SLO | Порог | Runbook |
+|-------|-----|-------|---------|
+| N8nSLOBreach | 99.5% успешных запросов | error rate > 0.5% за 5м | [RB-01](RUNBOOKS.md#rb-01--n8n-is-down) |
+| PostgresPodDown | под всегда готов | not ready > 1м | [RB-02](RUNBOOKS.md#rb-02--postgresql-is-down) |
+| NodeDown | нода всегда доступна | недоступна > 2м | [RB-03](RUNBOOKS.md#rb-03--node-is-down) |
+| HighCPUUsage | CPU < 85% | > 85% за 10м | [RB-04](RUNBOOKS.md#rb-04--high-cpu-usage) |
+| HighMemoryUsage | Memory < 85% | > 85% за 10м | [RB-05](RUNBOOKS.md#rb-05--high-memory-usage) |
+| DiskSpaceLow | Disk < 80% | > 80% за 5м | [RB-06](RUNBOOKS.md#rb-06--disk-space-low) |
+
+## Runbooks и реагирование на инциденты
+
+Операционные плейбуки для каждого алерта: [RUNBOOKS.md](RUNBOOKS.md)
+
+Шаблон post-mortem для разбора инцидентов: [POSTMORTEM_TEMPLATE.md](POSTMORTEM_TEMPLATE.md)
 
 ## Безопасность
 
