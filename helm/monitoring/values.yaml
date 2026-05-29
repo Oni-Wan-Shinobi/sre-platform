@@ -8,12 +8,6 @@ grafana:
     ingressClassName: traefik
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-      - grafana.sre.lollollol.ru
-    tls:
-      - secretName: grafana-tls
-        hosts:
-          - grafana.sre.lollollol.ru
 
 prometheus:
   prometheusSpec:
