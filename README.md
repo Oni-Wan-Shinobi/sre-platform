@@ -138,8 +138,8 @@ Never commit to git:
 | terraform/terraform.tfvars | Hetzner Cloud API token |
 | terraform/backend.tfvars | S3 access key and secret key |
 | helm/n8n/values-prod.yaml | Domain, production configuration |
-| helm/pgadmin/values.yaml | Domain, pgAdmin credentials |
-| helm/postgres/values.yaml | Database name, username, password |
+| helm/pgadmin/values-prod.yaml | Domain, pgAdmin credentials |
+| helm/postgres/values-prod.yaml | Database name, username, password |
 | helm/monitoring/values-prod.yaml | Grafana password, Telegram alerts config |
 | helm/loki/values-prod.yaml | Loki S3 access key and secret key |
 
@@ -247,9 +247,9 @@ Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
     cd helm/n8n
     cp values-prod.yaml.example values-prod.yaml
     cd ../pgadmin
-    cp values-prod.yaml.example values.yaml
+    cp values-prod.yaml.example values-prod.yaml
     cd ../postgres
-    cp values-prod.yaml.example values.yaml
+    cp values-prod.yaml.example values-prod.yaml
     cd ../../ansible
     ansible-playbook -i inventory.ini deploy-apps.yml
 
@@ -452,8 +452,8 @@ Production-grade self-hosted платформа, построенная с ис�
 | terraform/terraform.tfvars | API токен Hetzner Cloud |
 | terraform/backend.tfvars | Access key и Secret key для S3 |
 | helm/n8n/values-prod.yaml | Домен, продовая конфигурация |
-| helm/pgadmin/values.yaml | Домен, учётные данные pgAdmin |
-| helm/postgres/values.yaml | Имя базы, имя пользователя, пароль |
+| helm/pgadmin/values-prod.yaml | Домен, учётные данные pgAdmin |
+| helm/postgres/values-prod.yaml | Имя базы, имя пользователя, пароль |
 | helm/monitoring/values-prod.yaml | Пароль Grafana, конфиг Telegram алертов |
 | helm/loki/values-prod.yaml | S3 access key и secret key для Loki |
 
@@ -561,9 +561,9 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
     cd helm/n8n
     cp values-prod.yaml.example values-prod.yaml
     cd ../pgadmin
-    cp values-prod.yaml.example values.yaml
+    cp values-prod.yaml.example values-prod.yaml
     cd ../postgres
-    cp values-prod.yaml.example values.yaml
+    cp values-prod.yaml.example values-prod.yaml
     cd ../../ansible
     ansible-playbook -i inventory.ini deploy-apps.yml
 

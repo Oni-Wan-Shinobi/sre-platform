@@ -1,28 +1,6 @@
-replicaCount: 1
-
-image:
-  repository: postgres
-  pullPolicy: IfNotPresent
-  tag: "16"
-
-service:
-  type: ClusterIP
-  port: 5432
-
+# Скопируйте в values-prod.yaml и заполните своими значениями
+# cp values-prod.yaml.example values-prod.yaml
 auth:
-  database: your_database_name
-  username: your_username
-  password: your_strong_password_here
-
-persistence:
-  enabled: true
-  size: 2Gi
-  storageClass: "local-path"
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+  database: ВАШ_DB_NAME
+  username: ВАШ_DB_USER
+  password: ВАШ_DB_PASSWORD

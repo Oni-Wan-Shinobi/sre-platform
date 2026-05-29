@@ -16,5 +16,5 @@ ansible/inventory.ini
 
 # Helm production values
 helm/*/values-prod.yaml
-helm/pgadmin/values.yaml
-helm/postgres/values.yaml
+helm/pgadmin/values-prod.yaml
+helm/postgres/values-prod.yaml

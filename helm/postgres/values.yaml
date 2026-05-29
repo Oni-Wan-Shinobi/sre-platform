@@ -1,0 +1,23 @@
+replicaCount: 1
+image:
+  repository: postgres
+  pullPolicy: IfNotPresent
+  tag: "16"
+service:
+  type: ClusterIP
+  port: 5432
+auth:
+  database: mydb
+  username: myuser
+  password: changeme
+persistence:
+  enabled: true
+  size: 2Gi
+  storageClass: "local-path"
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

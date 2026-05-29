@@ -1,42 +1,16 @@
-replicaCount: 1
-
-image:
-  repository: dpage/pgadmin4
-  pullPolicy: IfNotPresent
-  tag: "latest"
-
-service:
-  type: ClusterIP
-  port: 80
-
+# Скопируйте в values-prod.yaml и заполните своими значениями
+# cp values-prod.yaml.example values-prod.yaml
 ingress:
   enabled: true
-  className: "traefik"
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: pgadmin.yourdomain.com
+    - host: pgadmin.ВАШ_ДОМЕН
       paths:
         - path: /
           pathType: Prefix
   tls:
     - hosts:
-        - pgadmin.yourdomain.com
+        - pgadmin.ВАШ_ДОМЕН
       secretName: pgadmin-tls
-
 env:
-  PGADMIN_DEFAULT_EMAIL: "admin@yourdomain.com"
-  PGADMIN_DEFAULT_PASSWORD: "changeme"
-
-persistence:
-  enabled: true
-  size: 1Gi
-  storageClass: "local-path"
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+  PGADMIN_DEFAULT_EMAIL: "ВАШ_EMAIL"
+  PGADMIN_DEFAULT_PASSWORD: "ВАШ_ПАРОЛЬ"
