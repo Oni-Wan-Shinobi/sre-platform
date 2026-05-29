@@ -49,16 +49,18 @@ jobs:
         id: tag
         run: echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build Docker image
+      - name: Set up Docker Buildx
         run: |
-          docker build -t ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
-                       -t ${{ env.IMAGE_NAME }}:latest \
-                       exporter/
+          docker buildx create --use --name multiarch || docker buildx use multiarch
 
-      - name: Push to ghcr.io
+      - name: Build and Push multi-platform Docker image
         run: |
-          docker push ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
-          docker push ${{ env.IMAGE_NAME }}:latest
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --push \
+            -t ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            -t ${{ env.IMAGE_NAME }}:latest \
+            exporter/
 
   deploy:
     name: Deploy
