@@ -18,6 +18,8 @@ spec:
         prometheus.io/port: "9101"
         prometheus.io/path: "/metrics"
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: n8n-exporter
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
