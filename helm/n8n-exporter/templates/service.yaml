@@ -7,7 +7,8 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
+    - name: metrics
+      port: {{ .Values.service.port }}
       targetPort: 9101
   selector:
     app: {{ include "n8n-exporter.fullname" . }}
