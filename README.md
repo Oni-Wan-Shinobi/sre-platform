@@ -162,7 +162,7 @@ Never commit to git:
 | terraform/backend.tfvars | S3 access key and secret key |
 | helm/n8n/values-prod.yaml | Domain, production configuration |
 | helm/pgadmin/values-prod.yaml | Domain, pgAdmin credentials |
-| helm/postgres/values-prod.yaml | Database name, username, password |
+| helm/postgres/values-prod.yaml | Database name, username, password, S3 backup credentials |
 | helm/monitoring/values-prod.yaml | Grafana password, Telegram alerts config |
 | helm/loki/values-prod.yaml | Loki S3 access key and secret key |
 
@@ -225,6 +225,9 @@ Add an A record pointing to the public IP of sre-node-1.
     cp backend.tfvars.example backend.tfvars
     terraform init -backend-config=backend.tfvars
     terraform apply
+    terraform output
+
+> **Note:** Every push that changes `terraform/` files automatically runs `terraform validate` and `terraform fmt -check` via GitHub Actions (`terraform.yml` workflow).
 
 ### Step 2 — Ansible bootstrap
 
@@ -278,9 +281,26 @@ Installs cert-manager and creates a Let's Encrypt ClusterIssuer.
 
 Manual Helm deploys:
 
+    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml
     helm upgrade --install n8n ~/sre-platform/helm/n8n --namespace default --values helm/n8n/values.yaml --values helm/n8n/values-prod.yaml
     helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default --values helm/pgadmin/values.yaml --values helm/pgadmin/values-prod.yaml
-    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml
+
+### Step 7.1 — PostgreSQL backups
+
+Automatic nightly pg_dump to Hetzner Object Storage (same bucket as Loki).
+
+Fill in S3 credentials in `helm/postgres/values-prod.yaml`:
+
+    backup:
+      s3AccessKey: "YOUR_S3_ACCESS_KEY"
+      s3SecretKey: "YOUR_S3_SECRET_KEY"
+
+The CronJob runs at **02:00 UTC** daily, uploads to `s3://sre-loki-logs/postgres/`, keeps last 7 days.
+
+To trigger manually:
+
+    kubectl create job --from=cronjob/postgres-backup pg-backup-manual -n default
+    kubectl logs -l job-name=pg-backup-manual -n default
 
 ### Step 8 — Logging stack (Loki + Alloy)
 
@@ -339,10 +359,16 @@ Add the following GitHub Secrets in repository Settings → Secrets and variable
 |--------|----------|
 | N8N_VALUES_PROD | Contents of helm/n8n/values-prod.yaml |
 | PGADMIN_VALUES_PROD | Contents of helm/pgadmin/values-prod.yaml |
-| POSTGRES_VALUES_PROD | Contents of helm/postgres/values-prod.yaml |
+| POSTGRES_VALUES_PROD | Contents of helm/postgres/values-prod.yaml (auth + backup S3 credentials) |
 | N8N_API_KEY | n8n API key for Prometheus exporter |
+| GHCR_TOKEN | GitHub Personal Access Token (write:packages) for n8n-exporter image |
 
-Pipeline runs automatically on every push to main: lint (helm lint + kubeconform) → create values from secrets → deploy → verify.
+To get the value for `POSTGRES_VALUES_PROD`, fill in `helm/postgres/values-prod.yaml` using the example:
+
+    cp helm/postgres/values-prod.yaml.example helm/postgres/values-prod.yaml
+    # Fill in your values, then copy the contents to the GitHub Secret
+
+Pipeline runs automatically on every push to main: lint (helm lint + kubeconform) → create values from secrets → deploy (postgres → n8n → pgadmin) → verify.
 
 
 ## n8n Prometheus Exporter
@@ -553,7 +579,7 @@ Production-grade self-hosted платформа, построенная с ис�
 | terraform/backend.tfvars | Access key и Secret key для S3 |
 | helm/n8n/values-prod.yaml | Домен, продовая конфигурация |
 | helm/pgadmin/values-prod.yaml | Домен, учётные данные pgAdmin |
-| helm/postgres/values-prod.yaml | Имя базы, имя пользователя, пароль |
+| helm/postgres/values-prod.yaml | Имя базы, имя пользователя, пароль, S3 credentials для бэкапа |
 | helm/monitoring/values-prod.yaml | Пароль Grafana, конфиг Telegram алертов |
 | helm/loki/values-prod.yaml | S3 access key и secret key для Loki |
 
@@ -616,6 +642,9 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
     cp backend.tfvars.example backend.tfvars
     terraform init -backend-config=backend.tfvars
     terraform apply
+    terraform output
+
+> **Примечание:** При каждом push изменений в `terraform/` автоматически запускается `terraform validate` и `terraform fmt -check` через GitHub Actions (workflow `terraform.yml`).
 
 ### Шаг 2 — Ansible bootstrap
 
@@ -669,9 +698,26 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
 
 Деплой вручную через Helm:
 
+    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml
     helm upgrade --install n8n ~/sre-platform/helm/n8n --namespace default --values helm/n8n/values.yaml --values helm/n8n/values-prod.yaml
     helm upgrade --install pgadmin ~/sre-platform/helm/pgadmin --namespace default --values helm/pgadmin/values.yaml --values helm/pgadmin/values-prod.yaml
-    helm upgrade --install postgres ~/sre-platform/helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml
+
+### Шаг 7.1 — Бэкапы PostgreSQL
+
+Автоматический ночной pg_dump в Hetzner Object Storage (тот же bucket что и Loki).
+
+Заполните S3 credentials в `helm/postgres/values-prod.yaml`:
+
+    backup:
+      s3AccessKey: "ВАШ_S3_ACCESS_KEY"
+      s3SecretKey: "ВАШ_S3_SECRET_KEY"
+
+CronJob запускается в **02:00 UTC** ежедневно, загружает в `s3://sre-loki-logs/postgres/`, хранит последние 7 дней.
+
+Запустить вручную:
+
+    kubectl create job --from=cronjob/postgres-backup pg-backup-manual -n default
+    kubectl logs -l job-name=pg-backup-manual -n default
 
 ### Шаг 8 — Логирование (Loki + Alloy)
 
@@ -730,10 +776,16 @@ Loki работает в режиме **SingleBinary** — один под об�
 |--------|------------|
 | N8N_VALUES_PROD | Содержимое helm/n8n/values-prod.yaml |
 | PGADMIN_VALUES_PROD | Содержимое helm/pgadmin/values-prod.yaml |
-| POSTGRES_VALUES_PROD | Содержимое helm/postgres/values-prod.yaml |
+| POSTGRES_VALUES_PROD | Содержимое helm/postgres/values-prod.yaml (auth + S3 credentials для бэкапа) |
 | N8N_API_KEY | API ключ n8n для Prometheus exporter |
+| GHCR_TOKEN | GitHub Personal Access Token (write:packages) для образа n8n-exporter |
 
-Pipeline запускается автоматически при каждом push в main: lint (helm lint + kubeconform) → создание values из секретов → деплой → проверка.
+Чтобы получить значение для `POSTGRES_VALUES_PROD`, заполните `helm/postgres/values-prod.yaml` по шаблону:
+
+    cp helm/postgres/values-prod.yaml.example helm/postgres/values-prod.yaml
+    # Заполните своими данными, затем скопируйте содержимое в GitHub Secret
+
+Pipeline запускается автоматически при каждом push в main: lint (helm lint + kubeconform) → создание values из секретов → деплой (postgres → n8n → pgadmin) → проверка.
 
 
 ## n8n Prometheus Exporter
