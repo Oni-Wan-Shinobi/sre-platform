@@ -14,6 +14,7 @@
       - ufw
       - fail2ban
       - net-tools
+      - iptables-persistent
     state: present
 
 - name: Install Docker
@@ -52,6 +53,9 @@
   ufw:
     state: enabled
     policy: deny
+  tags: ufw
+- name: Save iptables rules
+  shell: netfilter-persistent save
   tags: ufw
 
 - name: Enable and start fail2ban

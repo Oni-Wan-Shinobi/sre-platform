@@ -2,6 +2,9 @@
 - name: Bootstrap sre nodes
   hosts: sre_nodes
   become: true
-
+  vars_files:
+    - vault.yml
   roles:
     - common
+    - fail2ban_telegram
+    - server_activity

@@ -69,6 +69,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create ghcr pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=oni-wan-shinobi \
+            --docker-password=${{ secrets.GHCR_TOKEN }} \
+            --namespace default \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Create API key secret
         env:
           N8N_API_KEY: ${{ secrets.N8N_API_KEY }}

@@ -25,7 +25,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 9101
+            - name: metrics
+              containerPort: 9101
           env:
             - name: N8N_URL
               value: {{ .Values.env.N8N_URL | quote }}
