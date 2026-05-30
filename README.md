@@ -342,7 +342,7 @@ Add the following GitHub Secrets in repository Settings → Secrets and variable
 | POSTGRES_VALUES_PROD | Contents of helm/postgres/values-prod.yaml |
 | N8N_API_KEY | n8n API key for Prometheus exporter |
 
-Pipeline runs automatically on every push to main: lint → create values from secrets → deploy → verify.
+Pipeline runs automatically on every push to main: lint (helm lint + kubeconform) → create values from secrets → deploy → verify.
 
 
 ## n8n Prometheus Exporter
@@ -733,7 +733,7 @@ Loki работает в режиме **SingleBinary** — один под об�
 | POSTGRES_VALUES_PROD | Содержимое helm/postgres/values-prod.yaml |
 | N8N_API_KEY | API ключ n8n для Prometheus exporter |
 
-Pipeline запускается автоматически при каждом push в main: lint → создание values из секретов → деплой → проверка.
+Pipeline запускается автоматически при каждом push в main: lint (helm lint + kubeconform) → создание values из секретов → деплой → проверка.
 
 
 ## n8n Prometheus Exporter
