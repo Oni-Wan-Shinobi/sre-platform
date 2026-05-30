@@ -69,6 +69,7 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
     ├── terraform/
     │   ├── main.tf
     │   ├── variables.tf
+    │   ├── outputs.tf
     │   ├── backend.tfvars.example
     │   └── terraform.tfvars.example
     ├── ansible/
@@ -454,6 +455,7 @@ Production-grade self-hosted платформа, построенная с ис�
     ├── terraform/
     │   ├── main.tf
     │   ├── variables.tf
+    │   ├── outputs.tf
     │   ├── backend.tfvars.example
     │   └── terraform.tfvars.example
     ├── ansible/

@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: n8nio/n8n
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "2.21.8"
 
 nameOverride: ""
 fullnameOverride: ""

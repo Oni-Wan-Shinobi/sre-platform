@@ -27,6 +27,30 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.auth.username }}
+                - -d
+                - {{ .Values.auth.database }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.auth.username }}
+                - -d
+                - {{ .Values.auth.database }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
