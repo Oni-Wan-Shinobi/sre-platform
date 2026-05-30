@@ -18,7 +18,7 @@
     state: present
 
 - name: Install Docker
-  shell: curl -fsSL https://get.docker.com | sh
+  shell: curl -fsSL https://get.docker.com | VERSION=29.5.2 sh
   args:
     creates: /usr/bin/docker
 

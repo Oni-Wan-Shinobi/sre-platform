@@ -57,8 +57,8 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
 | 22 | TCP | SSH |
 | 80 | TCP | HTTP |
 | 443 | TCP | HTTPS |
-| 6443 | TCP | k3s API server |
-| 8472 | UDP | Flannel VXLAN (CNI pod networking) |
+| 6443 | TCP | k3s API server (restricted: sre-main IP + 10.0.1.0/24) |
+| 8472 | UDP | Flannel VXLAN (CNI pod networking, restricted: 10.0.1.0/24, 10.42.0.0/16) |
 | 9100 | TCP | node-exporter (internal only: 10.0.1.0/24, 10.42.0.0/16) |
 
 ## Repository Structure
@@ -474,8 +474,8 @@ Production-grade self-hosted платформа, построенная с ис�
 | 22 | TCP | SSH |
 | 80 | TCP | HTTP |
 | 443 | TCP | HTTPS |
-| 6443 | TCP | k3s API сервер |
-| 8472 | UDP | Flannel VXLAN (CNI сеть между подами) |
+| 6443 | TCP | k3s API сервер (ограничен: IP sre-main + 10.0.1.0/24) |
+| 8472 | UDP | Flannel VXLAN (CNI сеть между подами, ограничен: 10.0.1.0/24, 10.42.0.0/16) |
 | 9100 | TCP | node-exporter (только внутри: 10.0.1.0/24, 10.42.0.0/16) |
 
 ## Структура репозитория
