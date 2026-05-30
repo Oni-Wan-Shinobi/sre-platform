@@ -5,10 +5,10 @@ terraform {
       version = "~> 1.45"
     }
   }
-backend "s3" {
-    bucket                      = "sre-terraform-state"
-    key                         = "terraform.tfstate"
-    region                      = "fsn1"
+  backend "s3" {
+    bucket = "sre-terraform-state"
+    key    = "terraform.tfstate"
+    region = "fsn1"
     endpoints = {
       s3 = "https://fsn1.your-objectstorage.com"
     }
@@ -16,7 +16,7 @@ backend "s3" {
     skip_metadata_api_check     = true
     skip_region_validation      = true
     skip_requesting_account_id  = true
-    use_path_style            = true
+    use_path_style              = true
   }
 }
 
@@ -49,23 +49,23 @@ resource "hcloud_firewall" "main" {
   name = "sre-firewall"
 
   rule {
-    direction = "in"
-    protocol  = "tcp"
-    port      = "22"
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "22"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 
   rule {
-    direction = "in"
-    protocol  = "tcp"
-    port      = "80"
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "80"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 
   rule {
-    direction = "in"
-    protocol  = "tcp"
-    port      = "443"
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "443"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
   rule {

@@ -66,6 +66,11 @@ Demonstrates end-to-end infrastructure automation: from cloud provisioning to ap
     sre-platform/
     ├── RUNBOOKS.md
     ├── POSTMORTEM_TEMPLATE.md
+    ├── .github/
+    │   └── workflows/
+    │       ├── deploy.yml
+    │       ├── exporter.yml
+    │       └── terraform.yml
     ├── terraform/
     │   ├── main.tf
     │   ├── variables.tf
@@ -452,6 +457,11 @@ Production-grade self-hosted платформа, построенная с ис�
     sre-platform/
     ├── RUNBOOKS.md
     ├── POSTMORTEM_TEMPLATE.md
+    ├── .github/
+    │   └── workflows/
+    │       ├── deploy.yml
+    │       ├── exporter.yml
+    │       └── terraform.yml
     ├── terraform/
     │   ├── main.tf
     │   ├── variables.tf
