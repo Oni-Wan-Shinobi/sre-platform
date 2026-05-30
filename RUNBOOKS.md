@@ -11,7 +11,7 @@ Operational playbooks for the SRE Platform. Each runbook is linked from a Promet
 **SLO impact:** Yes — error rate above 0.5%
 
 ### Symptoms
-- https://n8n.sre.lollollol.ru returns 502/503
+- https://n8n.YOUR_DOMAIN returns 502/503
 - Telegram alert: N8nSLOBreach firing
 
 ### Investigation

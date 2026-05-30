@@ -2,3 +2,4 @@
 # cp terraform.tfvars.example terraform.tfvars
 
 hcloud_token = "ВАШ_HETZNER_API_TOKEN"
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... your-key-comment"

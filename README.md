@@ -152,7 +152,7 @@ Never commit to git:
 |------|----------|
 | ansible/vault.yml | Telegram tokens, whitelisted IPs |
 | ansible/inventory.ini | Real server IP addresses |
-| terraform/terraform.tfvars | Hetzner Cloud API token |
+| terraform/terraform.tfvars | Hetzner Cloud API token, SSH public key |
 | terraform/backend.tfvars | S3 access key and secret key |
 | helm/n8n/values-prod.yaml | Domain, production configuration |
 | helm/pgadmin/values-prod.yaml | Domain, pgAdmin credentials |
@@ -537,7 +537,7 @@ Production-grade self-hosted платформа, построенная с ис�
 |------|------------|
 | ansible/vault.yml | Telegram токены, разрешённые IP-адреса |
 | ansible/inventory.ini | Реальные IP-адреса серверов |
-| terraform/terraform.tfvars | API токен Hetzner Cloud |
+| terraform/terraform.tfvars | API токен Hetzner Cloud, публичный SSH ключ |
 | terraform/backend.tfvars | Access key и Secret key для S3 |
 | helm/n8n/values-prod.yaml | Домен, продовая конфигурация |
 | helm/pgadmin/values-prod.yaml | Домен, учётные данные pgAdmin |

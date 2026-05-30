@@ -26,7 +26,7 @@ provider "hcloud" {
 
 resource "hcloud_ssh_key" "vps" {
   name       = "sre-vps"
-  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJsB/AOOS/j/xwjc53Qdc18J5Ki6WBshNyLCLim6/4Qi sre-vps"
+  public_key = var.ssh_public_key
 }
 
 
