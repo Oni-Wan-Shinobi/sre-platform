@@ -353,6 +353,14 @@ Copy kubeconfig to runner user:
     chown -R github-runner:github-runner /home/github-runner/.kube
     chmod 600 /home/github-runner/.kube/config
 
+Add runner to docker group and login to ghcr.io:
+
+    usermod -aG docker github-runner
+    systemctl restart actions.runner.YOUR_USERNAME-sre-platform.sre-main.service
+    su - github-runner -c "echo YOUR_GHCR_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin"
+    mkdir -p /home/github-runner/bin
+    chown github-runner:github-runner /home/github-runner/bin
+
 Add the following GitHub Secrets in repository Settings → Secrets and variables → Actions:
 
 | Secret | Contains |
@@ -769,6 +777,14 @@ Loki работает в режиме **SingleBinary** — один под об�
     cp /root/.kube/config /home/github-runner/.kube/config
     chown -R github-runner:github-runner /home/github-runner/.kube
     chmod 600 /home/github-runner/.kube/config
+
+Добавьте runner в группу docker и залогиньтесь в ghcr.io:
+
+    usermod -aG docker github-runner
+    systemctl restart actions.runner.ВАШ_USERNAME-sre-platform.sre-main.service
+    su - github-runner -c "echo ВАШ_GHCR_TOKEN | docker login ghcr.io -u ВАШ_USERNAME --password-stdin"
+    mkdir -p /home/github-runner/bin
+    chown github-runner:github-runner /home/github-runner/bin
 
 Добавьте GitHub Secrets в Settings → Secrets and variables → Actions:
 
