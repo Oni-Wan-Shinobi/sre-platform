@@ -7,8 +7,6 @@
 
 - name: Run server-activity installer
   shell: |
-    export TELEGRAM_BOT_TOKEN="{{ telegram_token_activity }}"
-    export TELEGRAM_CHAT_ID="{{ telegram_chat_id }}"
-    bash /tmp/server-activity-telegram.sh
+    printf '1\n{{ telegram_token_activity }}\n{{ telegram_chat_id }}\n3600\n' | bash /tmp/server-activity-telegram.sh
   args:
-    creates: /usr/local/bin/server-activity-telegram.sh
+    creates: /usr/local/bin/tg_login.sh

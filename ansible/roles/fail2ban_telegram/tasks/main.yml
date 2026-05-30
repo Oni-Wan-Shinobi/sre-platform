@@ -1,4 +1,10 @@
 ---
+- name: Pre-answer debconf for iptables-persistent
+  shell: |
+    echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
+    echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
+  become: true
+
 - name: Download fail2ban-telegram script
   get_url:
     url: https://raw.githubusercontent.com/Oni-Wan-Shinobi/fail2ban-telegram/main/fail2ban-telegram.sh
@@ -7,9 +13,6 @@
 
 - name: Run fail2ban-telegram installer
   shell: |
-    export TELEGRAM_BOT_TOKEN="{{ telegram_token }}"
-    export TELEGRAM_CHAT_ID="{{ telegram_chat_id }}"
-    export WHITELIST_IP="{{ whitelist_ip }}"
-    bash /tmp/fail2ban-telegram.sh
+    printf '1\n{{ telegram_token }}\n{{ telegram_chat_id }}\n{{ whitelist_ip }}\n{{ whitelist_ip_extra }}\n5\nn\nn\n22\n' | bash /tmp/fail2ban-telegram.sh
   args:
-    creates: /etc/fail2ban/action.d/telegram.conf
+    creates: /etc/fail2ban/action.d/two-stage-ban.conf
