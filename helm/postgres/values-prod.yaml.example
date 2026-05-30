@@ -4,3 +4,7 @@ auth:
   database: ВАШ_DB_NAME
   username: ВАШ_DB_USER
   password: ВАШ_DB_PASSWORD
+
+backup:
+  s3AccessKey: "YOUR_S3_ACCESS_KEY"
+  s3SecretKey: "YOUR_S3_SECRET_KEY"

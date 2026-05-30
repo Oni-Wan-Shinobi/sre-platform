@@ -47,12 +47,12 @@ jobs:
 
       - name: Apply SLO rules
         run: kubectl apply -f helm/monitoring/templates/slo-rules.yaml
+      - name: Deploy postgres
+        run: helm upgrade --install postgres helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml --wait --timeout 120s
       - name: Deploy n8n
         run: helm upgrade --install n8n helm/n8n --namespace default --values helm/n8n/values.yaml --values helm/n8n/values-prod.yaml --wait --timeout 120s
       - name: Deploy pgadmin
         run: helm upgrade --install pgadmin helm/pgadmin --namespace default --values helm/pgadmin/values.yaml --values helm/pgadmin/values-prod.yaml --wait --timeout 120s
-      - name: Deploy postgres
-        run: helm upgrade --install postgres helm/postgres --namespace default --values helm/postgres/values.yaml --values helm/postgres/values-prod.yaml --wait --timeout 120s
       - name: Verify
         run: |
           kubectl rollout status deployment/n8n -n default --timeout=60s

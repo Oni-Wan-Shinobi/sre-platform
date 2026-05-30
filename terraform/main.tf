@@ -72,13 +72,13 @@ resource "hcloud_firewall" "main" {
     direction  = "in"
     protocol   = "tcp"
     port       = "6443"
-    source_ips = ["0.0.0.0/0", "::/0"]
+    source_ips = [var.management_ip, "10.0.1.0/24"]
   }
   rule {
     direction  = "in"
     protocol   = "udp"
     port       = "8472"
-    source_ips = ["0.0.0.0/0", "::/0"]
+    source_ips = ["10.0.1.0/24", "10.42.0.0/16"]
   }
 }
 

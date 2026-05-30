@@ -21,3 +21,11 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  s3Bucket: "sre-loki-logs"
+  s3Endpoint: "https://fsn1.your-objectstorage.com"
+  s3AccessKey: ""
+  s3SecretKey: ""

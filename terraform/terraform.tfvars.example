@@ -3,3 +3,4 @@
 
 hcloud_token = "ВАШ_HETZNER_API_TOKEN"
 ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... your-key-comment"
+management_ip = "YOUR_SRE_MAIN_IP/32"

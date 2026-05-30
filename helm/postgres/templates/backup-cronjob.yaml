@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: default
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-dump
+              image: postgres:16-alpine
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secret
+                      key: POSTGRES_PASSWORD
+                - name: S3_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-backup-secret
+                      key: s3-access-key
+                - name: S3_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-backup-secret
+                      key: s3-secret-key
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  apk add --no-cache curl > /dev/null 2>&1
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_FILE="/tmp/dump_${TIMESTAMP}.sql.gz"
+
+                  echo "Starting pg_dump..."
+                  pg_dump -h postgres -U {{ .Values.auth.username }} {{ .Values.auth.database }} | gzip > ${BACKUP_FILE}
+                  echo "Dump done: $(du -sh ${BACKUP_FILE} | cut -f1)"
+
+                  echo "Uploading to S3..."
+                  S3_BUCKET={{ .Values.backup.s3Bucket }}
+                  S3_ENDPOINT={{ .Values.backup.s3Endpoint }}
+                  S3_KEY=postgres/dump_${TIMESTAMP}.sql.gz
+                  DATE=$(date -R)
+                  CONTENT_TYPE="application/octet-stream"
+                  SIG_STRING="PUT\n\n${CONTENT_TYPE}\n${DATE}\n/${S3_BUCKET}/${S3_KEY}"
+                  SIGNATURE=$(echo -en "${SIG_STRING}" | openssl sha1 -hmac "${S3_SECRET_KEY}" -binary | base64)
+                  curl -X PUT -T ${BACKUP_FILE} \
+                    -H "Host: ${S3_BUCKET}.fsn1.your-objectstorage.com" \
+                    -H "Date: ${DATE}" \
+                    -H "Content-Type: ${CONTENT_TYPE}" \
+                    -H "Authorization: AWS ${S3_ACCESS_KEY}:${SIGNATURE}" \
+                    "${S3_ENDPOINT}/${S3_BUCKET}/${S3_KEY}"
+                  echo "Upload done: ${S3_KEY}"
