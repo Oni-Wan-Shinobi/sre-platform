@@ -12,11 +12,21 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz -C /usr/local/bin/
+
       - name: Helm lint
         run: |
           helm lint helm/n8n --set ingress.enabled=false
           helm lint helm/pgadmin
           helm lint helm/postgres
+
+      - name: Kubeconform
+        run: |
+          helm template helm/n8n | kubeconform -strict -summary
+          helm template helm/pgadmin | kubeconform -strict -summary
+          helm template helm/postgres | kubeconform -strict -summary
 
   deploy:
     name: Deploy
