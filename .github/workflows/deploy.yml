@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install kubeconform
         run: |
-          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz --overwrite -C /usr/local/bin/
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz -C $HOME/bin/ && export PATH=$HOME/bin:$PATH
 
       - name: Helm lint
         run: |
@@ -24,6 +24,7 @@ jobs:
 
       - name: Kubeconform
         run: |
+          export PATH=$HOME/bin:$PATH
           helm template helm/n8n | kubeconform -strict -summary
           helm template helm/pgadmin | kubeconform -strict -summary
           helm template helm/postgres | kubeconform -strict -summary
