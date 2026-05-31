@@ -37,7 +37,7 @@ spec:
                 - -c
                 - |
                   set -e
-                  apk add --no-cache curl > /dev/null 2>&1
+                  apk add --no-cache curl openssl > /dev/null 2>&1
                   TIMESTAMP=$(date +%Y%m%d_%H%M%S)
                   BACKUP_FILE="/tmp/dump_${TIMESTAMP}.sql.gz"
 
@@ -53,12 +53,17 @@ spec:
                   CONTENT_TYPE="application/octet-stream"
                   SIG_STRING="PUT\n\n${CONTENT_TYPE}\n${DATE}\n/${S3_BUCKET}/${S3_KEY}"
                   SIGNATURE=$(echo -en "${SIG_STRING}" | openssl sha1 -hmac "${S3_SECRET_KEY}" -binary | base64)
-                  curl -X PUT -T ${BACKUP_FILE} \
+                  UPLOAD_RESULT=$(curl -s -o /tmp/upload_response.txt -w "%{http_code}" -X PUT -T ${BACKUP_FILE} \
                     -H "Host: ${S3_BUCKET}.fsn1.your-objectstorage.com" \
                     -H "Date: ${DATE}" \
                     -H "Content-Type: ${CONTENT_TYPE}" \
                     -H "Authorization: AWS ${S3_ACCESS_KEY}:${SIGNATURE}" \
-                    "${S3_ENDPOINT}/${S3_BUCKET}/${S3_KEY}"
+                    "${S3_ENDPOINT}/${S3_BUCKET}/${S3_KEY}")
+                  if [ "${UPLOAD_RESULT}" != "200" ]; then
+                    echo "Upload failed (HTTP ${UPLOAD_RESULT}):"
+                    cat /tmp/upload_response.txt
+                    exit 1
+                  fi
                   echo "Upload done: ${S3_KEY}"
                   SIZE=$(du -sh ${BACKUP_FILE} | cut -f1)
                   curl -s -X POST "https://api.telegram.org/bot{{ .Values.backup.telegramToken }}/sendMessage" \
