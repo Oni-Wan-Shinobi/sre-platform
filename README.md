@@ -288,14 +288,17 @@ Manual Helm deploys:
 ### Step 7.1 — PostgreSQL backups
 
 Automatic nightly pg_dump to Hetzner Object Storage (same bucket as Loki).
+Upload is done via MinIO client (`mc`). On success, a Telegram notification is sent.
 
-Fill in S3 credentials in `helm/postgres/values-prod.yaml`:
+Fill in credentials in `helm/postgres/values-prod.yaml`:
 
     backup:
       s3AccessKey: "YOUR_S3_ACCESS_KEY"
       s3SecretKey: "YOUR_S3_SECRET_KEY"
+      telegramToken: "YOUR_ALERTMANAGER_BOT_TOKEN"
+      telegramChatId: "YOUR_TELEGRAM_CHAT_ID"
 
-The CronJob runs at **02:00 UTC** daily, uploads to `s3://sre-loki-logs/postgres/`, keeps last 7 days.
+The CronJob runs at **02:00 UTC** daily, uploads to `s3://sre-loki-logs/postgres/`, keeps last 7 days (older backups deleted automatically).
 
 To trigger manually:
 
@@ -367,7 +370,7 @@ Add the following GitHub Secrets in repository Settings → Secrets and variable
 |--------|----------|
 | N8N_VALUES_PROD | Contents of helm/n8n/values-prod.yaml |
 | PGADMIN_VALUES_PROD | Contents of helm/pgadmin/values-prod.yaml |
-| POSTGRES_VALUES_PROD | Contents of helm/postgres/values-prod.yaml (auth + backup S3 credentials) |
+| POSTGRES_VALUES_PROD | Contents of helm/postgres/values-prod.yaml (auth + S3 backup credentials + Telegram token) |
 | N8N_API_KEY | n8n API key for Prometheus exporter |
 | GHCR_TOKEN | GitHub Personal Access Token (write:packages) for n8n-exporter image |
 
@@ -713,14 +716,17 @@ https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
 ### Шаг 7.1 — Бэкапы PostgreSQL
 
 Автоматический ночной pg_dump в Hetzner Object Storage (тот же bucket что и Loki).
+Загрузка выполняется через MinIO client (`mc`). При успехе приходит Telegram-уведомление.
 
-Заполните S3 credentials в `helm/postgres/values-prod.yaml`:
+Заполните credentials в `helm/postgres/values-prod.yaml`:
 
     backup:
       s3AccessKey: "ВАШ_S3_ACCESS_KEY"
       s3SecretKey: "ВАШ_S3_SECRET_KEY"
+      telegramToken: "ВАШ_ТОКЕН_ALERTMANAGER_БОТА"
+      telegramChatId: "ВАШ_TELEGRAM_CHAT_ID"
 
-CronJob запускается в **02:00 UTC** ежедневно, загружает в `s3://sre-loki-logs/postgres/`, хранит последние 7 дней.
+CronJob запускается в **02:00 UTC** ежедневно, загружает в `s3://sre-loki-logs/postgres/`, хранит последние 7 дней (старые бэкапы удаляются автоматически).
 
 Запустить вручную:
 
@@ -792,7 +798,7 @@ Loki работает в режиме **SingleBinary** — один под об�
 |--------|------------|
 | N8N_VALUES_PROD | Содержимое helm/n8n/values-prod.yaml |
 | PGADMIN_VALUES_PROD | Содержимое helm/pgadmin/values-prod.yaml |
-| POSTGRES_VALUES_PROD | Содержимое helm/postgres/values-prod.yaml (auth + S3 credentials для бэкапа) |
+| POSTGRES_VALUES_PROD | Содержимое helm/postgres/values-prod.yaml (auth + S3 credentials для бэкапа + Telegram токен) |
 | N8N_API_KEY | API ключ n8n для Prometheus exporter |
 | GHCR_TOKEN | GitHub Personal Access Token (write:packages) для образа n8n-exporter |
 
