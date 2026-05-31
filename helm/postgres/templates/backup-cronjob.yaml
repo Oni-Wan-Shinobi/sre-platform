@@ -37,36 +37,21 @@ spec:
                 - -c
                 - |
                   set -e
-                  apk add --no-cache curl openssl > /dev/null 2>&1
+                  apk add --no-cache curl wget > /dev/null 2>&1
+                  wget -q https://dl.min.io/client/mc/release/linux-arm64/mc -O /usr/local/bin/mc
+                  chmod +x /usr/local/bin/mc
                   TIMESTAMP=$(date +%Y%m%d_%H%M%S)
                   BACKUP_FILE="/tmp/dump_${TIMESTAMP}.sql.gz"
-
                   echo "Starting pg_dump..."
                   pg_dump -h postgres -U {{ .Values.auth.username }} {{ .Values.auth.database }} | gzip > ${BACKUP_FILE}
                   echo "Dump done: $(du -sh ${BACKUP_FILE} | cut -f1)"
-
                   echo "Uploading to S3..."
-                  S3_BUCKET={{ .Values.backup.s3Bucket }}
-                  S3_ENDPOINT={{ .Values.backup.s3Endpoint }}
-                  S3_KEY=postgres/dump_${TIMESTAMP}.sql.gz
-                  DATE=$(date -R)
-                  CONTENT_TYPE="application/octet-stream"
-                  SIG_STRING="PUT\n\n${CONTENT_TYPE}\n${DATE}\n/${S3_BUCKET}/${S3_KEY}"
-                  SIGNATURE=$(echo -en "${SIG_STRING}" | openssl sha1 -hmac "${S3_SECRET_KEY}" -binary | base64)
-                  UPLOAD_RESULT=$(curl -s -o /tmp/upload_response.txt -w "%{http_code}" -X PUT -T ${BACKUP_FILE} \
-                    -H "Host: ${S3_BUCKET}.fsn1.your-objectstorage.com" \
-                    -H "Date: ${DATE}" \
-                    -H "Content-Type: ${CONTENT_TYPE}" \
-                    -H "Authorization: AWS ${S3_ACCESS_KEY}:${SIGNATURE}" \
-                    "${S3_ENDPOINT}/${S3_BUCKET}/${S3_KEY}")
-                  if [ "${UPLOAD_RESULT}" != "200" ]; then
-                    echo "Upload failed (HTTP ${UPLOAD_RESULT}):"
-                    cat /tmp/upload_response.txt
-                    exit 1
-                  fi
-                  echo "Upload done: ${S3_KEY}"
+                  mc alias set hetzner {{ .Values.backup.s3Endpoint }} ${S3_ACCESS_KEY} ${S3_SECRET_KEY} --api S3v4 > /dev/null
+                  mc cp ${BACKUP_FILE} hetzner/{{ .Values.backup.s3Bucket }}/postgres/
+                  echo "Upload done"
+                  mc find hetzner/{{ .Values.backup.s3Bucket }}/postgres/ --older-than 7d --exec "mc rm {}" 2>/dev/null || true
                   SIZE=$(du -sh ${BACKUP_FILE} | cut -f1)
                   curl -s -X POST "https://api.telegram.org/bot{{ .Values.backup.telegramToken }}/sendMessage" \
                     -d chat_id={{ .Values.backup.telegramChatId }} \
-                    -d text="✅ PostgreSQL backup done%0AFile: ${S3_KEY}%0ASize: ${SIZE}" > /dev/null
+                    -d text="PostgreSQL backup done. File: postgres/dump_${TIMESTAMP}.sql.gz Size: ${SIZE}" > /dev/null
                   echo "Telegram notification sent"
