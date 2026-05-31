@@ -29,3 +29,5 @@ backup:
   s3Endpoint: "https://fsn1.your-objectstorage.com"
   s3AccessKey: ""
   s3SecretKey: ""
+  telegramToken: ""
+  telegramChatId: ""
