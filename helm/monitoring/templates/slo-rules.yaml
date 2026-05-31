@@ -36,7 +36,7 @@ spec:
       interval: 30s
       rules:
         - alert: PostgresPodDown
-          expr: kube_pod_status_ready{pod=~"postgres.*", namespace="default", condition="true"} == 0
+          expr: kube_pod_status_ready{pod=~"postgres-[0-9]+", namespace="default", condition="true"} == 0
           for: 1m
           labels:
             severity: critical
